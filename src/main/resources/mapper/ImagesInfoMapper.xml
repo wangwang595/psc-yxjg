@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.ImagesInfoMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        codingCode, persons, dataTime, images, status, tableName
+    </sql>
+
+    <select id="getImagesInfoById" resultType="com.wavenet.maintenance.web.vo.ImagesInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from IMAGES_INFO where id = #{id}
+    </select>
+
+    <select id="getImagesInfoPageList" resultType="com.wavenet.maintenance.web.vo.ImagesInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from IMAGES_INFO
+    </select>
+
+</mapper>

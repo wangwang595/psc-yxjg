@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.RoadWatchMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+      tba.patrol_code,tba.road_code,tba.road_name,tba.road_section_code,tba.road_section_start,
+      tba.road_section_end,tba.date_start
+        , tba.date_end,tba.mileage,tba.type,tba.person_code,tba.person_name,
+      tba.company,tba.town,tba.state,tba.DELETE_STATE,tba.project_team,tba.speed,tba.trajectory_img
+    </sql>
+
+    <select id="selectInfoByCount" parameterType="map" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con ,tbb.event_code from  PATROL_INFO  tba
+        LEFT JOIN ( SELECT patrol_code, Max( attachment ) attachment,group_concat(event_code) event_code, count( 1 ) AS cnt FROM EVENT_INFO GROUP BY patrol_code ) tbb ON tba.patrol_code = tbb.patrol_code
+        where 1=1
+        <if test="param.projectTeam != null and  param.projectTeam!=''">
+            and project_team in (${param.projectTeam})
+        </if>
+        <if test="param.town != null and  param.town!=''">
+            and town in (${param.town})
+        </if>
+        <if test="param.personName != null and  param.personName!=''">
+            and person_name = #{param.personName}
+        </if>
+        <if test="param.type != null and  param.type!=''">
+            and tba.big_category = #{param.type}
+        </if>
+        <if test="param.beginTime != null and  param.beginTime!=''">
+            and date_start >= #{param.beginTime}
+        </if>
+        <if test="param.endTime != null and  param.endTime!=''">
+            and date_start &lt;= #{param.endTime}
+        </if>
+        <if test="param.personCode != null and  param.personCode!=''">
+            and person_code = #{param.personCode}
+        </if>
+        and delete_state=1
+        and state='已完成'
+        order by tba.date_start desc , case tba.state when '未完成' then 1 when '执行中' then 2
+        when '已完成' then 3  end asc
+    </select>
+    <!--修改计算好的平均速度-->
+    <update id="updatePatrolSpeed" parameterType="java.lang.String">
+        update PATROL_INFO set  speed = #{speed}
+        where patrol_code=#{code}
+    </update>
+
+    <select id="selectSum" parameterType="com.wavenet.maintenance.dao.entity.RoadWatchParam" resultType="com.wavenet.maintenance.web.vo.RoadWatchVo">
+        SELECT
+        sum( con ) eventcon,
+        ( CASE WHEN sum( mileage ) IS NULL THEN 0 ELSE sum( mileage ) END ) count,
+        count( 1 ) patrolcon
+        FROM
+        (
+        SELECT
+        tba.patrol_code,
+        tba.road_code,
+        tba.road_name,
+        tba.road_section_code,
+        tba.road_section_start,
+        tba.road_section_end,
+        str_to_date( tba.date_start, '%Y-%m-%d %k:%i:%s' ) date_start,
+        str_to_date( tba.date_end, '%Y-%m-%d %k:%i:%s' ) date_end,
+        tba.mileage,
+        tba.type,
+        tba.person_code,
+        tba.person_name,
+        tba.company,
+        tba.town,
+        tba.state,
+        tba.DELETE_STATE,
+        tba.project_team,
+        tba.speed,
+        tba.trajectory_img,
+        tbb.attachment,
+        ( CASE WHEN tbb.cnt IS NULL THEN 0 ELSE tbb.cnt END ) con
+        FROM
+        PATROL_INFO tba
+
+        LEFT JOIN ( SELECT patrol_code, Max( attachment ) attachment, count( 1 ) AS cnt FROM EVENT_INFO GROUP BY patrol_code ) tbb ON tba.patrol_code = tbb.patrol_code
+        WHERE 1=1
+        <if test="type != null and  type!=''">
+            and tba.big_category = #{type}
+        </if>
+        ) PATROL_INFO
+        WHERE 1=1
+        <if test="projectTeam != null and  projectTeam!=''">
+            and project_team in (${projectTeam})
+        </if>
+        <if test="town != null and  town!=''">
+            and town in  (${town})
+        </if>
+        <if test="personName != null and  personName!=''">
+            and person_name = #{personName}
+        </if>
+        <if test="beginTime != null and  beginTime!=''">
+            and date_start >= #{beginTime}
+        </if>
+        <if test="endTime != null and  endTime!=''">
+            and date_start &lt;= #{endTime}
+        </if>
+        <if test="personCode != null and  personCode!=''">
+            and person_code = #{personCode}
+        </if>
+        <if test="state != null and  state!=''">
+            and state = #{state}
+        </if>
+
+        and delete_state = 1
+    </select>
+
+    <!--非分页查询-->
+    <select id="selectRoadList" parameterType="com.wavenet.maintenance.dao.entity.RoadWatchParam" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,tbb.attachment from  PATROL_INFO  tba
+        left join (SELECT patrol_code,attachment FROM EVENT_INFO)  tbb
+        on  tba.patrol_code=tbb.patrol_code where 1=1
+        <if test="projectTeam != null and  projectTeam!=''">
+            and project_team = #{projectTeam}
+        </if>
+        <if test="town != null and  town!=''">
+            and town = #{town}
+        </if>
+        <if test="personName != null and  personName!=''">
+            and person_name = #{personName}
+        </if>
+        <if test="type != null and  type!=''">
+            and type = #{type}
+        </if>
+        <if test="beginTime != null and  beginTime!=''">
+            and date_start >= #{beginTime}
+        </if>
+        <if test="endTime != null and  endTime!=''">
+            and date_start &lt;= #{endTime}
+        </if>
+    </select>
+    
+    <select id="countByMileage" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select town,(case when round(sum(mileage)/1000,0) is null then 0 else round(sum(mileage)/1000,0) end ) mileage
+        from PATROL_INFO
+        where DELETE_STATE=1
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), date_start, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), date_start, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        group by town
+    </select>
+    
+    <select id="selectTotal" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.CountByMileageQueryVo">
+        select count(1)total from PATROL_INFO
+        where DELETE_STATE=1
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), date_start, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), date_start, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+    </select>
+
+    <select id="selectTotalGroupByTow" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select (case when tba.con is null then 0 else tba.con end) con,tbb.town from
+        (select town, count(1)con from PATROL_INFO
+        where DELETE_STATE=1
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), date_start, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), date_start, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        group by town) tba
+        right join
+        (select '霍山' town union select '四平' town union select '武川' town
+        union select '定海' town union select '新江湾城' town
+        union select '控江' town union select '嫩江' town
+        union select '五角场' town union select '大桥'town ) tbb
+        on tba.town = tbb.town
+    </select>
+    
+    <select id="selectEventConGroupByTown" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select tba.town,count(1)con from EVENT_INFO tba left join
+        (select * from PATROL_INFO) tbb on tba.patrol_code=tbb.patrol_code
+        where tba.patrol_code is not null and tbb.delete_state=1
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), tbb.date_start, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), tbb.date_start, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and tba.town = #{town}
+        </if>
+        group by tba.town
+    </select>
+    <select id="selectInfoByCountFirst" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code where 1=1
+        <if test="param.projectTeam != null and  param.projectTeam!=''">
+            and project_team = #{param.projectTeam}
+        </if>
+        <if test="param.town != null and  param.town!=''">
+            and town = #{param.town}
+        </if>
+        <if test="param.personName != null and  param.personName!=''">
+            and person_name = #{param.personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and big_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.beginTime != null and  param.beginTime!=''">
+            and date_start >= #{param.beginTime}
+        </if>
+        <if test="param.endTime != null and  param.endTime!=''">
+            and date_start &lt;= #{param.endTime}
+        </if>
+        <if test="param.personCode != null and  param.personCode!=''">
+            and person_code = #{param.personCode}
+        </if>
+        and delete_state=1
+        order by tba.date_start desc , case tba.state when '未完成' then 1 when '执行中' then 2
+        when '已完成' then 3  end asc
+
+
+    </select>
+    <select id="selectInfoByCountSecond" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code where 1=1
+        <if test="param.projectTeam != null and  param.projectTeam!=''">
+            and project_team = #{param.projectTeam}
+        </if>
+        <if test="param.town != null and  param.town!=''">
+            and town = #{param.town}
+        </if>
+        <if test="param.personName != null and  param.personName!=''">
+            and person_name = #{param.personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and middle_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.beginTime != null and  param.beginTime!=''">
+            and date_start >= #{param.beginTime}
+        </if>
+        <if test="param.endTime != null and  param.endTime!=''">
+            and date_start &lt;= #{param.endTime}
+        </if>
+        <if test="param.personCode != null and  param.personCode!=''">
+            and person_code = #{param.personCode}
+        </if>
+        and delete_state=1
+        order by tba.date_start desc , case tba.state when '未完成' then 1 when '执行中' then 2
+        when '已完成' then 3  end asc
+
+
+
+
+    </select>
+    <select id="selectInfoByCountThree" resultType="com.wavenet.maintenance.dao.entity.RoadWatch">
+
+        select
+        <include refid="Base_Column_List"/>
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code where 1=1
+        <if test="param.projectTeam != null and  param.projectTeam!=''">
+            and project_team = #{param.projectTeam}
+        </if>
+        <if test="param.town != null and  param.town!=''">
+            and town = #{param.town}
+        </if>
+        <if test="param.personName != null and  param.personName!=''">
+            and person_name = #{param.personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and small_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.beginTime != null and  param.beginTime!=''">
+            and date_start >= #{param.beginTime}
+        </if>
+        <if test="param.endTime != null and  param.endTime!=''">
+            and date_start &lt;= #{param.endTime}
+        </if>
+        <if test="param.personCode != null and  param.personCode!=''">
+            and person_code = #{param.personCode}
+        </if>
+        and delete_state=1
+        order by tba.date_start desc , case tba.state when '未完成' then 1 when '执行中' then 2
+        when '已完成' then 3  end asc
+
+
+
+    </select>
+    <select id="selectSum1" resultType="com.wavenet.maintenance.web.vo.RoadWatchVo">
+
+        select sum(con) eventcon,(case when sum(mileage) is null then 0 else sum(mileage) end )count, count(1) patrolcon from (select
+        tba.patrol_code,tba.road_code,tba.road_name,tba.road_section_code,tba.road_section_start,
+        tba.road_section_end,str_to_date(tba.date_start,'%Y-%m-%d %k:%i:%s')  date_start
+        ,  str_to_date(tba.date_end,'%Y-%m-%d %k:%i:%s') date_end ,tba.mileage,tba.type,tba.person_code,tba.person_name,
+        tba.company,tba.town,tba.state,tba.DELETE_STATE,tba.project_team,tba.speed,tba.trajectory_img
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code) PATROL_INFO
+        where 1=1
+        <if test="projectTeam != null and  projectTeam!=''">
+            and project_team = #{projectTeam}
+        </if>
+        <if test="town != null and  town!=''">
+            and town = #{town}
+        </if>
+        <if test="personName != null and  personName!=''">
+            and person_name = #{personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and big_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime != null and  beginTime!=''">
+            and date_start >= #{beginTime}
+        </if>
+        <if test="endTime != null and  endTime!=''">
+            and date_start &lt;= #{endTime}
+        </if>
+        <if test="personCode != null and  personCode!=''">
+            and person_code = #{personCode}
+        </if>
+        <if test="state != null and  state!=''">
+            and state = #{state}
+        </if>
+        and delete_state = 1
+
+    </select>
+    <select id="selectSum2" resultType="com.wavenet.maintenance.web.vo.RoadWatchVo">
+        select sum(con) eventcon,(case when sum(mileage) is null then 0 else sum(mileage) end )count, count(1) patrolcon from (select
+        tba.patrol_code,tba.road_code,tba.road_name,tba.road_section_code,tba.road_section_start,
+        tba.road_section_end,str_to_date(tba.date_start,'%Y-%m-%d %k:%i:%s')  date_start
+        ,  str_to_date(tba.date_end,'%Y-%m-%d %k:%i:%s') date_end ,tba.mileage,tba.type,tba.person_code,tba.person_name,
+        tba.company,tba.town,tba.state,tba.DELETE_STATE,tba.project_team,tba.speed,tba.trajectory_img
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code) PATROL_INFO
+        where 1=1
+        <if test="projectTeam != null and  projectTeam!=''">
+            and project_team = #{projectTeam}
+        </if>
+        <if test="town != null and  town!=''">
+            and town = #{town}
+        </if>
+        <if test="personName != null and  personName!=''">
+            and person_name = #{personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and middle_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime != null and  beginTime!=''">
+            and date_start >= #{beginTime}
+        </if>
+        <if test="endTime != null and  endTime!=''">
+            and date_start &lt;= #{endTime}
+        </if>
+        <if test="personCode != null and  personCode!=''">
+            and person_code = #{personCode}
+        </if>
+        <if test="state != null and  state!=''">
+            and state = #{state}
+        </if>
+        and delete_state = 1
+
+
+    </select>
+    <select id="selectSum3" resultType="com.wavenet.maintenance.web.vo.RoadWatchVo">
+        select sum(con) eventcon,(case when sum(mileage) is null then 0 else sum(mileage) end )count, count(1) patrolcon from (select
+        tba.patrol_code,tba.road_code,tba.road_name,tba.road_section_code,tba.road_section_start,
+        tba.road_section_end,str_to_date(tba.date_start,'%Y-%m-%d %k:%i:%s')  date_start
+        ,  str_to_date(tba.date_end,'%Y-%m-%d %k:%i:%s') date_end ,tba.mileage,tba.type,tba.person_code,tba.person_name,
+        tba.company,tba.town,tba.state,tba.DELETE_STATE,tba.project_team,tba.speed,tba.trajectory_img
+        ,tbb.attachment,(case  when tbb.cnt is null then 0 else tbb.cnt end ) con from  PATROL_INFO  tba
+        left join (SELECT patrol_code,Max(attachment) attachment,count(1) as cnt FROM EVENT_INFO group by patrol_code) tbb
+        on  tba.patrol_code=tbb.patrol_code) PATROL_INFO
+        where 1=1
+        <if test="projectTeam != null and  projectTeam!=''">
+            and project_team = #{projectTeam}
+        </if>
+        <if test="town != null and  town!=''">
+            and town = #{town}
+        </if>
+        <if test="personName != null and  personName!=''">
+            and person_name = #{personName}
+        </if>
+        <if test="type != null and type.size()>0">
+            and small_category in
+            <foreach item="item" index="index" collection="type"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime != null and  beginTime!=''">
+            and date_start >= #{beginTime}
+        </if>
+        <if test="endTime != null and  endTime!=''">
+            and date_start &lt;= #{endTime}
+        </if>
+        <if test="personCode != null and  personCode!=''">
+            and person_code = #{personCode}
+        </if>
+        <if test="state != null and  state!=''">
+            and state = #{state}
+        </if>
+        and delete_state = 1
+
+
+    </select>
+</mapper>

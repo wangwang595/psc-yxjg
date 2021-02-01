@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.TWelloperationMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, NUM, WELLTYPE, WELLCLASS, WELLSTATE, MANGE_ID, RECODE_ID, MAN_ID, TOWNID, COM_NAME,  UPDATETIME, REMARK, DEL, CATEGORY, TYPE,
+        X, Y, ADDR, YHWORK, CURINGSTYLE, enclosure, man_name,road_start,road_end,project_team
+    </sql>
+
+    <select id="getTWelloperationById" resultType="com.wavenet.maintenance.web.vo.TWelloperationQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from T_WELLOPERATION where id = #{id}
+    </select>
+
+    <select id="getTWelloperationPageList" resultType="com.wavenet.maintenance.web.vo.TWelloperationQueryVo">
+        select
+        <include refid="Base_Column_List"/>,ifnull(tba.com,0) numbers
+        from T_WELLOPERATION t1
+        left join (SELECT event_code , count(1) as com FROM `EVENT_INFO` GROUP BY event_code ) tba
+        on t1.MANGE_ID=tba.event_code
+        where 1=1
+        <if test="param.sDate!=null and param.sDate!= ''">
+            and updatetime &gt;= #{param.sDate}
+        </if>
+        <if test="param.eDate!=null and param.eDate!=''">
+            and updatetime &lt;=#{param.eDate}
+        </if>
+        <if test="param.state!=null and param.state!=''">
+            and wellstate = #{param.state}
+        </if>
+        <if test="param.manId!=null and param.manId!=''">
+            and man_id = #{param.manId}
+        </if>
+        <if test="param.wellClass!=null and param.wellClass!=''">
+            and wellclass = #{param.wellClass}
+        </if>
+        <if test="param.recodeId!=null and param.recodeId!=''">
+            and recode_id = #{param.recodeId}
+        </if>
+        <if test="param.nId!=null and param.nId!=''">
+            and id = #{param.nId}
+        </if>
+        <if test="param.yhwork!=null and param.yhwork!=''">
+            and yhwork = #{param.yhwork}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and townid = #{param.town}
+        </if>
+        <if test="param.welltype!=null and param.welltype!=''">
+            and welltype = #{param.welltype}
+        </if>
+
+        order by updatetime desc
+
+    </select>
+    
+    <select id="selectCountByYh" resultType="com.wavenet.maintenance.web.query.TWelloperationCountQueryVo">
+      select count(1)total ,count(yhwork) YHCnt  from T_WELLOPERATION
+      where 1=1
+        <if test="param.sDate!=null and param.sDate!= ''">
+            and updatetime &gt;= convert(varchar,#{param.sDate},121)
+        </if>
+        <if test="param.eDate!=null and param.eDate!=''">
+            and updatetime &lt;= convert(varchar,#{param.eDate},121)
+        </if>
+        <if test="param.manId!=null and param.manId!=''">
+            and man_id = #{param.manId}
+        </if>
+        <if test="param.wellClass!=null and param.wellClass!=''">
+            and wellclass = #{param.wellClass}
+        </if>
+        <if test="param.recodeId!=null and param.recodeId!=''">
+            and recode_id = #{param.recodeId}
+        </if>
+        <if test="param.nId!=null and param.nId!=''">
+            and id = #{param.nId}
+        </if>
+        and  yhwork='养护'
+    </select>
+
+    <select id="selectCountByZc" resultType="com.wavenet.maintenance.web.query.TWelloperationCountQueryVo">
+        select count(1) total,count(yhwork) JCCnt from T_WELLOPERATION  where 1=1
+        <if test="param.sDate!=null and param.sDate!= ''">
+            and updatetime &gt;= convert(varchar,#{param.sDate},121)
+        </if>
+        <if test="param.eDate!=null and param.eDate!=''">
+            and updatetime &lt;= convert(varchar,#{param.eDate},121)
+        </if>
+        <if test="param.manId!=null and param.manId!=''">
+            and man_id = #{param.manId}
+        </if>
+        <if test="param.wellClass!=null and param.wellClass!=''">
+            and wellclass = #{param.wellClass}
+        </if>
+        <if test="param.recodeId!=null and param.recodeId!=''">
+            and recode_id = #{param.recodeId}
+        </if>
+        <if test="param.nId!=null and param.nId!=''">
+            and id = #{param.nId}
+        </if>
+        and yhwork='检查'
+        and WELLSTATE='正常'
+    </select>
+    <select id="selectCountByYc" resultType="com.wavenet.maintenance.web.query.TWelloperationCountQueryVo">
+        select count(1) total,count(yhwork) JCCnt from T_WELLOPERATION  where 1=1
+        <if test="param.sDate!=null and param.sDate!= ''">
+            and updatetime &gt;= convert(varchar,#{param.sDate},121)
+        </if>
+        <if test="param.eDate!=null and param.eDate!=''">
+            and updatetime &lt;= convert(varchar,#{param.eDate},121)
+        </if>
+        <if test="param.manId!=null and param.manId!=''">
+            and man_id = #{param.manId}
+        </if>
+        <if test="param.wellClass!=null and param.wellClass!=''">
+            and wellclass = #{param.wellClass}
+        </if>
+        <if test="param.recodeId!=null and param.recodeId!=''">
+            and recode_id = #{param.recodeId}
+        </if>
+        <if test="param.nId!=null and param.nId!=''">
+            and id = #{param.nId}
+        </if>
+        and yhwork='检查'
+        and WELLSTATE='异常'
+    </select>
+    <select id="stringWell" resultType="java.lang.String">
+
+        SELECT NUM FROM T_WELLOPERATION GROUP BY NUM
+    </select>
+    <select id="statisticCount" resultType="com.wavenet.maintenance.web.vo.WellRecordVo">
+        SELECT count(*) as questions,project_team as town  FROM  T_WELLOPERATION  GROUP BY project_team
+
+
+    </select>
+    <select id="getCount" resultType="java.lang.Integer">
+        SELECT count(*) FROM  T_WELLOPERATION  WHERE WELLSTATE ='异常'
+        UNION all
+        SELECT count(*) FROM  T_WELLOPERATION  WHERE WELLSTATE ='正常'
+
+    </select>
+    <select id="statisticCountDistrict" resultType="com.wavenet.maintenance.web.vo.WellRecordVo">
+
+        SELECT count(*) as questions,TOWNID as town FROM  T_WELLOPERATION  WHERE 1=1
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY TOWNID
+
+    </select>
+    <select id="getCountDistrict" resultType="java.lang.Integer">
+        SELECT count(*) FROM  T_WELLOPERATION  WHERE WELLSTATE ='异常'
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        UNION all
+        SELECT count(*) FROM  T_WELLOPERATION  WHERE WELLSTATE ='正常'
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+
+    </select>
+</mapper>

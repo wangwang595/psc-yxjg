@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventDisposalMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        disposal_code, dispatch_code, solver_code, solver_name, town, company, solve_start, solve_end, solve_desc, att_before, att_ongoing, att_after
+        ,road_code,road_name,road_section_code,road_section_start,road_section_end,disposal_state,project_team,event_type,x,y,event_x,event_y,check_status
+        ,app_review,web_review
+    </sql>
+
+    <select id="getEventDisposalById" resultType="com.wavenet.maintenance.web.vo.EventDisposalQueryVo">
+        select
+         *
+        from EVENT_DISPOSAL where disposal_code = #{id}
+        and isDel = 1
+    </select>
+
+    <select id="getEventDisposalPageList" resultType="com.wavenet.maintenance.web.vo.EventDisposalQueryVo">
+        select tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,solve_start,tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state from EVENT_DISPOSAL tbd left join
+        (select tba.*,tbb.dispatch_code from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code where tba.delete_state='1' ) tbc
+        on tbd.dispatch_code=tbc.dispatch_code where tbd.isDel='1'  and
+        tbc.dispatch_code is not null
+
+            <if test="param.eventType!=null and param.eventType!=''">
+                and tbc.EVENT_TYPE = #{param.eventType}
+            </if>
+            <if test="param.projectTeam!=null and param.projectTeam!=''">
+                and project_team = #{param.projectTeam}
+            </if>
+            <if test="param.town!=null and param.town!=''">
+                and town = #{param.town}
+            </if>
+            <if test="param.solverName!=null and param.solverName!=''">
+                and solver_name = #{param.solverName}
+            </if>
+            <if test="param.disposalState!=null and param.disposalState!=''">
+                and disposal_state = #{param.disposalState}
+            </if>
+            <if test="param.startTime!=null and param.startTime!=''">
+                and solve_start >=#{param.startTime}
+
+                and solve_start &lt;=#{param.endTime}
+            </if>
+    </select>
+
+    <select id="getEventDisposalByDispatchId" resultType="com.wavenet.maintenance.web.vo.EventDisposalQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL where [dispatch_code] = #{dispatchCode}
+        and isDel = 1
+    </select>
+
+    <update id="updateIsDel" parameterType="java.lang.String">
+        update EVENT_DISPOSAL set isDel = 0 where disposal_code = #{disposalCode}
+    </update>
+
+    <select id="selectNewByPersonCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EveryReportErrorVo">
+        select top 1
+        disposal_code,dispatch_code,disposal_state state
+        from EVENT_DISPOSAL where solver_code= #{personCode}
+        and isDel = 1
+        order by solve_start desc
+    </select>
+
+    <select id="selectDisposalByDispatchCode" resultType="com.wavenet.maintenance.web.vo.EventDisposalQueryVo">
+        select top 1
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL where dispatch_code = #{dispatchCode}
+        order by solve_start desc
+    </select>
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.ImagesDisposalMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        codingCode, persons, att_before, att_ongoing, att_after, dataTime, before_images, ongoing_images, after_images, status, tableName
+    </sql>
+
+    <select id="getImagesDisposalById" resultType="com.wavenet.maintenance.web.vo.ImagesDisposalQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from IMAGES_DISPOSAL where id = #{id}
+    </select>
+
+    <select id="getImagesDisposalPageList" resultType="com.wavenet.maintenance.web.vo.ImagesDisposalQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from IMAGES_DISPOSAL
+    </select>
+
+</mapper>

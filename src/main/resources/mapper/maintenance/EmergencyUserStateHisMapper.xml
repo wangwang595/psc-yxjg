@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EmergencyUserStateHisMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        user_name, user_id, user_state, project_team, town, receive_state, company, emergency_name, emergency_code, phone, start_time, end_time, status
+    </sql>
+
+<!--    <select id="getEmergencyUserStateHisById" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateHisQueryVo">-->
+<!--        select-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from Emergency_user_state_his where id = #{id}-->
+<!--    </select>-->
+
+<!--    <select id="getEmergencyUserStateHisPageList" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateHisQueryVo">-->
+<!--        select-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from Emergency_user_state_his-->
+<!--    </select>-->
+<!--    <select id="getNumberBySewerCode" resultType="java.lang.Integer">-->
+<!--        SELECT count(*) FROM Emergency_user_state-->
+<!--        where 1=1-->
+<!--        <if test="stringList != null and stringList.size()>0">-->
+<!--        and user_id in-->
+<!--        <foreach item="item" index="index" collection="stringList"-->
+<!--                 open="(" separator="," close=")">-->
+<!--            #{item}-->
+<!--        </foreach>-->
+<!--        </if>-->
+<!--        and user_state in ('0','2')-->
+<!--        <if test="town != null and town!= ''">-->
+<!--          and  town=#{town}-->
+<!--        </if>-->
+<!--    </select>-->
+<!--    <select id="getNumberByPavemenCode" resultType="java.lang.Integer">-->
+
+<!--        SELECT count(*) FROM Emergency_user_state-->
+<!--        where 1=1-->
+<!--        <if test="stringList != null and stringList.size()>0">-->
+<!--        and user_id in-->
+<!--        <foreach item="item" index="index" collection="stringList"-->
+<!--                 open="(" separator="," close=")">-->
+<!--            #{item}-->
+<!--        </foreach>-->
+<!--        </if>-->
+<!--        and user_state in ('0','2')-->
+<!--        <if test="town != null and town!= ''">-->
+<!--          and   town=#{town}-->
+<!--        </if>-->
+<!--    </select>-->
+<!--    <select id="getOnline" resultType="java.lang.Integer">-->
+<!--        SELECT count(*) FROM Emergency_user_state-->
+<!--        where 1=1-->
+<!--        <if test="stringList != null and stringList.size()>0">-->
+<!--            and user_id in-->
+<!--            <foreach item="item" index="index" collection="stringList"-->
+<!--                     open="(" separator="," close=")">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
+<!--        and user_state in ('0','2')-->
+
+<!--    </select>-->
+<!--    <select id="getTotalUser" resultType="com.wavenet.maintenance.web.vo.OnlineUsersVO">-->
+<!--        SELECT USER_CODE FROM org_user-->
+
+<!--    </select>-->
+<!--    <select id="totalNumberOfPeople" resultType="java.lang.Integer">-->
+
+<!--        SELECT count(*) FROM Emergency_user_state WHERE user_state in ('0','2')-->
+<!--    </select>-->
+<!--    <select id="getOnlinePerson" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateTimes">-->
+<!--        SELECT * FROM Emergency_user_state-->
+<!--        where 1=1-->
+<!--        <if test="strings != null and strings.size()>0">-->
+<!--            and user_id in-->
+<!--            <foreach item="item" index="index" collection="strings"-->
+<!--                     open="(" separator="," close=")">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
+<!--        and user_state in ('0','2')-->
+
+
+
+<!--    </select>-->
+<!--    <select id="getListUesr" resultType="com.wavenet.maintenance.dao.entity.EmergencyUserStateHis">-->
+<!--        SELECT * FROM Emergency_user_state_his WHERE user_id=#{userId} and emergency_code=#{emergencyCode} ORDER BY end_time-->
+
+
+<!--    </select>-->
+<!--    <select id="NumberVo" resultType="com.wavenet.maintenance.web.vo.NumberVo">-->
+
+<!--        select a.USER_CODE,a.COMPANY,c.NAME from org_user a , org_user_role_rel  b, org_role  c  where a.USER_CODE=b.USER_CODE and b.ROLE_CODE=c.ROLE_CODE   and c.code='town'     </select>-->
+
+</mapper>

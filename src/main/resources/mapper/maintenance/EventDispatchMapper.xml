@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventDispatchMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        EVENT_DISPATCH.dispatch_code, EVENT_DISPATCH.dispatcher_code, EVENT_DISPATCH.dispatcher_name, EVENT_DISPATCH.dispatcher_date,
+        EVENT_DISPATCH.dispatcher_desc, EVENT_DISPATCH.recipient_code, EVENT_DISPATCH.recipient_name, EVENT_DISPATCH.town, EVENT_DISPATCH.company ,
+        EVENT_DISPATCH.type,EVENT_DISPATCH.road_code, EVENT_DISPATCH.road_name, EVENT_DISPATCH.road_section_code, EVENT_DISPATCH.road_section_start, EVENT_DISPATCH.road_section_end, EVENT_DISPATCH.DISPATCH_STATE
+        ,EVENT_DISPATCH.event_type,EVENT_DISPATCH.end_time,EVENT_DISPATCH.source,EVENT_DISPATCH.project_team
+    </sql>
+    <sql id="Base_List">
+        disposal_code,dispatch_code,solver_code,solver_name,town,company,
+        solve_start,solve_end,solve_desc,att_before,att_ongoing,att_after,
+        road_code,road_name,road_section_code,road_section_start,road_section_end , project_team
+    </sql>
+    <sql id="Base_List1">
+        EVENT_DISPOSAL.disposal_code,EVENT_DISPOSAL.dispatch_code,EVENT_DISPOSAL.solver_code,EVENT_DISPOSAL.solver_name,EVENT_DISPOSAL.town,EVENT_DISPOSAL.company,EVENT_DISPOSAL.
+        solve_start,EVENT_DISPOSAL.solve_end,EVENT_DISPOSAL.solve_desc,EVENT_DISPOSAL.att_before,EVENT_DISPOSAL.att_ongoing,EVENT_DISPOSAL.att_after, EVENT_DISPOSAL.project_team
+    </sql>
+
+
+    <select id="getEventDispatchById" resultType="com.wavenet.maintenance.web.vo.EventDispatchQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPATCH where DISPATCH_CODE = #{id}
+    </select>
+    <!--查询养护列表-->
+    <select id="getEventDispatchPageList" resultType="com.wavenet.maintenance.web.vo.EventDispatchQueryVo">
+        select
+        <include refid="Base_List"/>
+        from EVENT_DISPOSAL
+        where 1=1
+        <if test="eventDispatchQueryParam.dispatcherDate != null and eventDispatchQueryParam.dispatcherDate != ''">
+            and solve_start like #{eventDispatchQueryParam.dispatcherDate}+'%'
+        </if>
+        <if test="eventDispatchQueryParam.dispatcherState != null and eventDispatchQueryParam.dispatcherState != ''">
+            and disposal_state = #{eventDispatchQueryParam.dispatcherState}
+        </if>
+        <if test="eventDispatchQueryParam.recipientCode != null and eventDispatchQueryParam.recipientCode != ''">
+            and SOLVER_CODE = #{eventDispatchQueryParam.recipientCode}
+        </if>
+        and isDel = 1
+
+    </select>
+
+    <select id="getDispatchById" resultType="com.wavenet.maintenance.web.vo.EventDispatchYhInfoVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPATCH where DISPATCH_CODE = #{id}
+    </select>
+    <!--养护详情病害查询-->
+    <select id="selectInfoByCode" parameterType="java.lang.String"
+            resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select * from EVENT_INFO where event_code
+        in (select tbb.event_code from (select * from EVENT_DISPATCH tba where dispatch_code=#{code} ) tba
+        left join EVENT_DISPATCH_REL tbb
+        on tba.dispatch_code=tbb.dispatch_code)
+    </select>
+    <!--养护详情主体查询-->
+    <select id="selectDispatchInfo" parameterType="java.lang.String"
+            resultType="com.wavenet.maintenance.web.vo.EventDispatchYhInfoVo">
+        select * from EVENT_DISPOSAL
+        where disposal_code=#{code}
+        and isDel = 1
+    </select>
+    <select id="selectWorkLoad" parameterType="java.lang.String"
+            resultType="com.wavenet.maintenance.web.vo.EventDisposalWorkloadQueryVo">
+        select * from EVENT_DISPOSAL_WORKLOAD where disposal_code=#{disposalCode}
+    </select>
+
+    <select id="selectDispatList" parameterType="java.lang.String"
+            resultType="com.wavenet.maintenance.dao.entity.EventDispatch">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPATCH where 1=1
+        <if test="town != ''and town != null ">
+            and town = #{town}
+        </if>
+    </select>
+    <!--查询eventInfo所有路段信息-->
+    <select id="selectRoadVoList" resultType="com.wavenet.maintenance.web.vo.RoadVo">
+        select distinct road_code roadCode,EVENT_DISPOSAL.road_name roadName,road_section_code roadSectionCode, road_section_start roadSectionStart, road_section_end roadSectionEnd
+        from EVENT_DISPATCH
+    </select>
+    <!--根据路段，起始时间查询eventDispatch所有路段信息-->
+    <select id="selectEventListBySectionCodeAndTime" resultType="com.wavenet.maintenance.dao.entity.EventDispatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,edr.eventNum from event_dispatch
+        left join (select count(*) eventNum,dispatch_code from event_dispatch_rel GROUP BY dispatch_code) edr
+        on event_dispatch.dispatch_code = edr.dispatch_code
+        where 1=1
+        <if test="param.roadCode!=null and param.roadCode!=''">
+            and event_dispatch.road_code = #{param.roadCode}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+            and event_dispatch.road_section_code = #{param.roadSectionCode}
+        </if>
+        <if test="param.eventState!=null and param.eventState!=''">
+            and event_dispatch.dispatch_state = #{param.eventState}
+        </if>
+        <if test="param.startDate!=null and param.startDate!=''">
+            and event_dispatch.dispatcher_date &gt; convert(varchar,#{param.startDate},121)
+        </if>
+        <if test="param.endDate!=null and param.endDate!=''">
+            and event_dispatch.dispatcher_date &lt; convert(varchar,#{param.endDate},121)
+        </if>
+        <if test="param.recipientCode!=null and param.recipientCode!=''">
+            and event_dispatch.recipient_code = #{param.recipientCode}
+        </if>
+        <if test="param.eventType!=null and param.eventType!=''">
+            and event_dispatch.event_type = #{param.eventType}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and event_dispatch.town = #{param.town}
+        </if>
+        <choose>
+            <when test="param.desc == null or param.desc = '' or param.desc ">
+                order by event_dispatch.dispatcher_date desc
+            </when>
+            <otherwise>
+                order by event_dispatch.dispatcher_date asc
+            </otherwise>
+        </choose>
+    </select>
+    <select id="findById" parameterType="java.lang.String"
+            resultType="com.wavenet.maintenance.web.vo.EventDispatchQueryVo">
+        SELECT distinct
+         TBA.* FROM EVENT_DISPATCH TBA , EVENT_DISPOSAL TBB
+
+        WHERE TBA.dispatch_code = TBB.dispatch_code
+        and TBB.dispatch_code = #{id}
+       </select>
+    <select id="EventDispatchPageList" resultType="com.wavenet.maintenance.dao.entity.EventDispatch">
+        select *
+        from EVENT_DISPATCH
+        where 1=1
+        <if test="param.eventType!=null and  param.eventType!=''">
+            and event_type=#{param.eventType}
+        </if>
+        <if test="param.projectTeam!=null and param.projectTeam!=''">
+            and project_team=#{param.projectTeam}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and town= #{param.town}
+        </if>
+        <if test="param.dispatcherName!=null and param.dispatcherName!=''">
+            and dispatcher_name=#{param.dispatcherName}
+        </if>
+        <if test="param.dispatchState!=null and param.dispatchState!=''">
+            and dispatch_state = #{param.dispatchState}
+        </if>
+        <if test="param.startTime!=null and param.startTime!=''">
+            and dispatcher_date >= #{param.startTime}
+
+            and dispatcher_date &lt;= #{param.endTime}
+        </if>
+    </select>
+    <select id="selectEventListBySectionCodeAndTimeNews"
+            resultType="com.wavenet.maintenance.dao.entity.EventDispatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,edr.eventNum from event_dispatch
+        left join (select count(*) eventNum,dispatch_code from event_dispatch_rel GROUP BY dispatch_code) edr
+        on event_dispatch.dispatch_code = edr.dispatch_code
+        where 1=1
+        <if test="param.roadCode!=null and param.roadCode!=''">
+            and event_dispatch.road_code = #{param.roadCode}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+            and event_dispatch.road_section_code = #{param.roadSectionCode}
+        </if>
+        <if test="param.eventState!=null and param.eventState!=''">
+            and event_dispatch.dispatch_state = #{param.eventState}
+        </if>
+        <if test="param.startDate!=null and param.startDate!=''">
+            and event_dispatch.dispatcher_date &gt; convert(varchar,#{param.startDate},121)
+        </if>
+        <if test="param.endDate!=null and param.endDate!=''">
+            and event_dispatch.dispatcher_date &lt; convert(varchar,#{param.endDate},121)
+        </if>
+        <if test="param.recipientCode!=null and param.recipientCode!=''">
+            and (event_dispatch.recipient_code = #{param.recipientCode}
+            or event_dispatch.recipient_code is null)
+        </if>
+        <if test="param.eventType!=null and param.eventType!=''">
+            and event_dispatch.event_type = #{param.eventType}
+        </if>
+        <if test="param.company!=null and param.company!=''">
+            and event_dispatch.company = #{param.company}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and event_dispatch.town = #{param.town}
+        </if>
+        and  source  in ('市网格','区网格','自派遣','网格单')
+        <if test="param.desc!=null and param.desc!=false">
+            order by event_dispatch.dispatcher_date asc
+        </if>
+        <if test="param.desc!=null and param.desc!=true">
+            order by event_dispatch.dispatcher_date desc
+        </if>
+
+
+    </select>
+    <select id="selectEventListBySectionCodeAndTimeNew" resultType="com.wavenet.maintenance.dao.entity.EventDispatch">
+        select
+        <include refid="Base_Column_List"/>
+        ,edr.eventNum from event_dispatch
+        left join (select count(*) eventNum,dispatch_code from event_dispatch_rel GROUP BY dispatch_code) edr
+        on event_dispatch.dispatch_code = edr.dispatch_code
+        where 1=1
+        <if test="param.roadCode!=null and param.roadCode!=''">
+            and event_dispatch.road_code = #{param.roadCode}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+            and event_dispatch.road_section_code = #{param.roadSectionCode}
+        </if>
+        <if test="param.eventState!=null and param.eventState!=''">
+            and event_dispatch.dispatch_state = #{param.eventState}
+        </if>
+        <if test="param.startDate!=null and param.startDate!=''">
+            and event_dispatch.dispatcher_date &gt; convert(varchar,#{param.startDate},121)
+        </if>
+        <if test="param.endDate!=null and param.endDate!=''">
+            and event_dispatch.dispatcher_date &lt; convert(varchar,#{param.endDate},121)
+        </if>
+        <if test="param.recipientCode!=null and param.recipientCode!=''">
+            and (event_dispatch.recipient_code = #{param.recipientCode}
+            or event_dispatch.recipient_code is null)
+        </if>
+        <if test="param.eventType!=null and param.eventType!=''">
+            and event_dispatch.event_type = #{param.eventType}
+        </if>
+        <if test="param.company!=null and param.company!=''">
+            and event_dispatch.company = #{param.company}
+        </if>
+        and  ( source is null or  source not in ('市网格','区网格','自派遣','网格单'))
+        <if test="param.town!=null and param.town!=''">
+            and event_dispatch.town = #{param.town}
+        </if>
+        <if test="param.desc!=null and param.desc!=false">
+            order by event_dispatch.dispatcher_date asc
+        </if>
+        <if test="param.desc!=null and param.desc!=true">
+            order by event_dispatch.dispatcher_date desc
+        </if>
+
+<!--        <choose>-->
+<!--            <when test="param.desc != 'true' ">-->
+<!--                order by event_dispatch.dispatcher_date asc-->
+<!--            </when>-->
+<!--            <otherwise>-->
+<!--                order by event_dispatch.dispatcher_date desc-->
+<!--            </otherwise>-->
+<!--        </choose>-->
+
+    </select>
+
+    <update id="updateNull" parameterType="java.lang.String">
+        update EVENT_DISPATCH set recipient_code = null , recipient_name = null
+        where dispatch_code = #{dispatchCode}
+    </update>
+
+    <select id="selectDispatchAndInfo" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.DispatchAndInfoQueryVo">
+       select tba.dispatch_code,tbb.event_code,tbc.event_standard from EVENT_DISPATCH tba left join EVENT_DISPATCH_REL tbb
+       on tba.dispatch_code=tbb.dispatch_code
+       left join EVENT_INFO tbc on tbb.event_code = tbc.event_code
+       where tbb.event_code is not null and tbc.event_standard is not null and tba.dispatch_code = #{dispatchCode}
+   </select>
+    <select id="inquireReview" resultType="com.wavenet.maintenance.web.vo.EventDisposalSourceVo">
+        SELECT   <include refid="Base_List1"/>,EVENT_INFO.source,EVENT_INFO.event_code,EVENT_INFO.road_code
+        ,EVENT_INFO.road_name,EVENT_INFO.road_section_code,EVENT_INFO.road_section_start,EVENT_INFO.road_section_end ,EVENT_DISPOSAL.check_status,
+        EVENT_DISPOSAL.disposal_state,EVENT_INFO.type as type
+        FROM EVENT_DISPOSAL,EVENT_INFO,EVENT_DISPATCH_REL
+        WHERE  1=1
+        <if test="parmterVo.checkStaus != null ">
+            and EVENT_DISPOSAL.check_status = #{parmterVo.checkStaus}
+        </if>
+        <if test="parmterVo.company != null and parmterVo.company !='' ">
+            and EVENT_DISPOSAL.company = #{parmterVo.company}
+        </if>
+        <if test="parmterVo.projectTeam != null and parmterVo.projectTeam != '' ">
+            and EVENT_DISPOSAL.project_team = #{parmterVo.projectTeam}
+        </if>
+
+        and EVENT_DISPOSAL.dispatch_code=EVENT_DISPATCH_REL.dispatch_code
+        and EVENT_DISPATCH_REL.event_code=EVENT_INFO.event_code
+        and EVENT_DISPOSAL.isDel=1
+        and EVENT_INFO.delete_state=1
+        and  EVENT_DISPOSAL.disposal_state in ('已完成','已审核')
+
+
+    </select>
+
+</mapper>

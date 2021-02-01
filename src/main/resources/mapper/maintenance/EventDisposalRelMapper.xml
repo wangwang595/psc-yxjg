@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventDisposalRelMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        event_disposal_code, event_code, disposal_code
+    </sql>
+
+    <select id="getEventDisposalRelById" resultType="com.wavenet.maintenance.web.vo.EventDisposalRelQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL_REL where EVENT_DISPOSAL_CODE = #{id}
+    </select>
+
+    <select id="getEventDisposalRelPageList" resultType="com.wavenet.maintenance.web.vo.EventDisposalRelQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL_REL
+    </select>
+
+
+</mapper>

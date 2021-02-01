@@ -1,0 +1,64 @@
+spring-boot-plus:
+  # 是否启用ansi控制台输出有颜色的字体，local环境建议开启，服务器环境设置为false
+  enable-ansi: true
+
+  # 拦截器配置
+  interceptor-config:
+    resource-config:
+      include-path: ${spring-boot-plus.resource-access-patterns}
+
+  # 文件上传下载配置
+  upload-path: /opt/upload/
+  # 资源访问路径
+  resource-access-path: /resource/
+  # 资源访问路径匹配：/resource/**
+  resource-access-patterns: ${spring-boot-plus.resource-access-path}**
+  # 资源访问全路径前缀：http://localhost:8888/resource/
+  resource-access-url: http://localhost:${server.port}${server.servlet.context-path}${spring-boot-plus.resource-access-path}
+
+server:
+  port: 9012
+  servlet:
+    context-path: /
+spring:
+  datasource:
+    dynamic:
+      primary: application
+      datasource:
+            application:
+              username: sa
+              password: 1qaz@wsx
+              driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+              url: jdbc:sqlserver://10.23.158.101;Databasename=YP_GDYHJGPT
+#              url: jdbc:sqlserver://172.18.1.128;Databasename=YP_GDYHJGPT
+            permission1:
+              username: root
+              password: 1qaz@wsx
+              driver-class-name: com.mysql.jdbc.Driver
+              url: jdbc:mysql://106.75.229.99:3306/org?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+            permission2:
+              username: yp_scada
+              password: scada2020
+              driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+              url: jdbc:sqlserver://106.75.229.99:1433;Databasename=yp_scada
+
+
+  # Redis配置
+  redis:
+    database: 0
+    host: 47.100.60.161
+    password:
+    port: 6379
+
+
+# logback.xml中有详细的日志配置
+logging:
+  config: classpath:config/logback.xml
+  #  方便Spring Boot Admin页面上实时查看日志
+  file:
+    path: logs/spring-boot-plus.log
+
+# 打印SQL语句和结果集，本地开发环境可开启，线上注释掉
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

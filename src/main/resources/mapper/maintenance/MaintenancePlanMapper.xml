@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.MaintenancePlanMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        plan_code, year, month, town, creator, creator_date, rain_total, rain_main, rain_lateral, sewer_total, sewer_main, sewer_lateral, manhole, catch_basin, company, type, auditor, auditor_idea, auditor_date, note, state
+    </sql>
+    <delete id="deleteByPlanCode">
+
+
+        DELETE FROM MAINTENANCE_DETAIL WHERE plan_code=#{planCode}  and curing_state !='已完成' and curing_state !='已审核'
+    </delete>
+    <delete id="deleteByplanCode">
+
+        DELETE  FROM  MAINTENANCE_PLAN WHERE plan_code=#{id}
+    </delete>
+
+    <select id="getMaintenancePlanById" resultType="com.wavenet.maintenance.web.vo.MaintenancePlanQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from MAINTENANCE_PLAN where id = #{id}
+    </select>
+
+    <select id="getMaintenancePlanPageList" resultType="com.wavenet.maintenance.web.vo.MaintenancePlanQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from MAINTENANCE_PLAN
+    </select>
+    
+    <select id="selectExist" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.MaintenancePlanQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from MAINTENANCE_PLAN
+        where year = #{year} and month = #{month} and town = #{town}
+    </select>
+    <select id="sewerInformation" resultType="com.wavenet.maintenance.web.vo.MannitVo">
+        SELECT
+        isnull(Round(sum(curing_length)/1000,1),0.00)  as xplan,
+        isnull(Round(sum(real_length)/1000,1),0.00) as  xreal ,
+        isnull(sum(curing_well_num),0)as manplan ,
+        isnull(sum(real_well_num) ,0) as manreal,
+        isnull(sum(curing_outlet_num) ,0) as outplan,
+        isnull(sum(real_out_num) ,0)as outreal
+        FROM MAINTENANCE_DISPOSAL
+        WHERE
+        1=1
+        <if test="startDate!=null ">
+            and date_start > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > date_start
+        </if>
+        <if test="project != null and project.size()>0">
+            and company in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+
+    </select>
+    <select id="getPlan" resultType="com.wavenet.maintenance.web.vo.MaintenancePlanQueryVos">
+
+        SELECT * FROM MAINTENANCE_PLAN
+        where
+        1=1
+        <if test="area!=null and area!=''">
+            and town in (${area})
+        </if>
+        <if test="year!=null and year!=''">
+            and year = #{year}
+        </if>
+        <if test="month!=null and month!=''">
+            and month = #{month}
+        </if>
+        <if test="project!=null and project!=''">
+            and project_team in (${project})
+        </if>
+        <if test="task!=null and task!=''">
+            and plans = #{task}
+        </if>
+
+        ORDER BY town
+
+
+    </select>
+    <select id="getListPlan" resultType="com.wavenet.maintenance.dao.entity.MaintenanceDetails">
+        SELECT * FROM MAINTENANCE_DETAIL 	WHERE
+        1=1
+        <if test="month!=null and month!=''">
+            and month = #{month}
+        </if>
+        <if test="year!=null and year!=''">
+            and year = #{year}
+        </if>
+        <if test="plan!=null and plan!=''">
+            and plans = #{plan}
+        </if>
+        <if test="type!=null and type!=''">
+            and type = #{type}
+        </if>
+        <if test="twon!=null and twon!=''">
+            and town = #{twon}
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY month desc
+
+
+    </select>
+    <select id="monthPlan" resultType="com.wavenet.maintenance.dao.entity.MaintenanceDetail">
+        SELECT * FROM MAINTENANCE_DETAIL 	WHERE
+        1=1
+        <if test="month!=null and month!=''">
+            and month = #{month}
+        </if>
+        <if test="year!=null and year!=''">
+            and year = #{year}
+        </if>
+        <if test="plan!=null and plan!=''">
+            and plans = #{plan}
+        </if>
+
+
+    </select>
+    <select id="getDetalList" resultType="com.wavenet.maintenance.dao.entity.MaintenanceDetail">
+
+        SELECT * FROM MAINTENANCE_DETAIL WHERE plan_code=#{id} order by road_name , road_section_start , road_section_end desc
+    </select>
+    <select id="getMaintenanceById" resultType="com.wavenet.maintenance.dao.entity.MaintenancePlan">
+        SELECT * FROM MAINTENANCE_PLAN  WHERE plan_code=#{planCode}
+
+    </select>
+    <select id="getPicuer" resultType="java.lang.String">
+
+
+        SELECT att_before FROM MAINTENANCE_DISPOSAL WHERE detail_code=#{detailCode}
+    </select>
+    <select id="getCarry" resultType="java.lang.Double">
+        SELECT COUNT(*) as close1 FROM MAINTENANCE_DETAIL WHERE plan_code=#{planCode} and curing_state='已完成'
+
+
+    </select>
+    <select id="gettotal" resultType="java.lang.Double">
+
+        SELECT COUNT(*)  as tocao1 FROM MAINTENANCE_DETAIL WHERE plan_code=#{planCode}
+
+    </select>
+
+
+</mapper>

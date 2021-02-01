@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.PatrolGpsHistoryMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        gps_code, patrol_code, person_code, uplaod_date, x y, y x, type, road_section_code, speed, mileage,
+        company
+    </sql>
+
+    <select id="getPatrolGpsHistoryById" resultType="com.wavenet.maintenance.web.vo.PatrolGpsHistoryQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_GPS_HISTORY where GPS_CODE = #{id}
+    </select>
+
+    <select id="getPatrolGpsHistoryPageList" resultType="com.wavenet.maintenance.web.vo.PatrolGpsHistoryQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_GPS_HISTORY where 1=1
+        <if test="param.patrolCode!=null and param.patrolCode!=''">
+            and patrol_code=#{param.patrolCode}
+        </if>
+    </select>
+
+    <select id="selectXy" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.PatrolGpsHistoryQueryVo">
+        select x,y from PATROL_GPS_HISTORY where patrol_code = #{patrolCode}
+        and (x!='0' or y!='0')
+        order by uplaod_date desc
+    </select>
+
+    <select id="selectStateIs0" resultType="com.wavenet.maintenance.web.vo.PatrolGpsHistoryQueryVo">
+        select * from PATROL_GPS_HISTORY where state = 0
+    </select>
+
+    <update id="updateByGpsCode">
+        update PATROL_GPS_HISTORY set state = 1
+        where state=0
+    </update>
+</mapper>

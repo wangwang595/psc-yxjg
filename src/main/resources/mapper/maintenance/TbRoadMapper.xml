@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.TbRoadMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        S_ROAD_ID, S_NAME, S_QD_ROAD, S_ZD_ROAD, N_ROAD_WIDTH, N_ROAD_LENGTH, N_ROAD_LANEWIDTH, N_ROAD_LANEAREA, N_ROAD_SIDEWALKAREA, S_ROADBED_GRADE, S_ROAD_GRADE, S_REBUILD_LASTYEAR, S_REMARK, S_ROADYEAR_TYPE, S_PLATE
+    </sql>
+
+    <select id="getTbRoadById" resultType="com.wavenet.maintenance.web.vo.TbRoadQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from TB_ROAD where id = #{id}
+    </select>
+
+    <select id="getTbRoadPageList" resultType="com.wavenet.maintenance.web.vo.TbRoadQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from TB_ROAD
+    </select>
+
+    <select id="getRoadName" resultType="java.lang.String">
+        select distinct S_NAME from TB_ROAD
+    </select>
+
+</mapper>

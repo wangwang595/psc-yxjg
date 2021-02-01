@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.PumpInfoMapper">
+
+    <!--查询计划长度-->
+    <select id="findPumpById" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.PumpInfoQueryVo">
+            select TBA.S_DRAI_PUMP_NAME BZMC, TBD.S_NAME BZDL, TBA.N_GRADE GLDJ,
+
+        (NVL (TBC.N_INTERCEPPUMP_SUM,0) + NVL(TBC.N_RAINWATERPUMP_SUM,0)) BJZS,
+
+        TBA.S_DRAI_PUMP_TO_RIV PRST, TBA.N_DRAI_PUMP_FLOW_DSN_Y YSSJLL, TBA.N_DRAI_PUMP_FLOW_DSN_W WSSJLL, TBA.S_SJGLDW GLDW, TBC.D_TIME TIME,
+
+        round(TBC.N_WATERLEVEL_1,2) SW , TBB.N_GROUNDELEV_JSJ JSJDMBG,
+
+        TBB.N_BOTTOMELEV GDBG, TBB.N_DRAIPIPE_DIAMETER_IN JSGGJ,
+
+        (TBC.N_INTERCEPPUMP_OPEN+TBC.N_RAINWATERPUMP_OPEN) SUMOPEN , NVL(TBC.N_RAINWATERPUMP_SUM,0) YSZS, TBC.N_RAINWATERPUMP_OPEN YSKJGS,
+
+        TBC.N_RAINWATERPUMP_PLATE YSMP ,TBF.YSRLJ, TBC.N_INTERCEPPUMP_SUM WSZS ,
+
+        TBC. N_INTERCEPPUMP_OPEN WSKJGS , TBC.N_INTERCEPPUMP_PLATE WSMP , TBE.WSRLJ
+
+         from T_DRAINPUMP TBA
+
+         left join
+
+         T_DRAINPUMP_ADD TBB
+
+         ON TBA.S_XTBM = TBB.S_XTBM
+
+         left join
+
+         S_DRAINPUMP_ACHIEVEMET TBC
+
+         ON TBA.S_XTBM = TBC.S_XTBM
+
+         left join
+
+         T_DICTIONARYS_CONFIG TBD
+
+         ON TBD.S_NO = 'DRAI_PUMP_TYPE'
+
+         left join
+
+          (select TBE.S_STID,ROUND(SUM(NVL (TBE.S_BJMP,0) * NVL (TBE.N_DQKBSC,0))/10000,2) WSRLJ
+
+            FROM T_KTBMX_MID TBE WHERE  TBE.T_KBTIME >=sysdate+8/24 AND TBE.S_BJTYPE = 1
+
+            GROUP BY TBE.S_STID) TBE
+
+         on TBE.S_STID = TBB.S_STID
+
+         left join
+
+          (select TBF.S_STID,SUM(NVL (TBF.S_BJMP,0) * NVL (TBF.N_DQKBSC,0))/10000 as YSRLJ
+
+            FROM T_KTBMX_MID TBF WHERE  TBF.T_KBTIME >=sysdate+8/24 AND TBF.S_BJTYPE = 2
+
+            GROUP BY TBF.S_STID) TBF
+
+         on TBF.S_STID = TBB.S_STID
+
+        where  TBD.S_DIC_VALUE = TBA.N_DRAI_PUMP_TYPE and TBA.S_XTBM = #{id}
+
+
+        group by TBA.S_DRAI_PUMP_NAME , TBD.S_NAME , TBA.N_GRADE ,(TBC.N_INTERCEPPUMP_SUM+TBC.N_RAINWATERPUMP_SUM) ,
+
+        TBA.S_DRAI_PUMP_TO_RIV , TBA.N_DRAI_PUMP_FLOW_DSN_Y , TBA.N_DRAI_PUMP_FLOW_DSN_W , TBA.S_SJGLDW , TBC.D_TIME ,
+
+        TBC.N_WATERLEVEL_1 ,
+
+        (TBC.N_INTERCEPPUMP_OPEN+TBC.N_RAINWATERPUMP_OPEN)  , TBC.N_RAINWATERPUMP_SUM , TBC.N_RAINWATERPUMP_OPEN ,
+
+        TBC.N_RAINWATERPUMP_PLATE  , TBC.N_INTERCEPPUMP_SUM  , TBC. N_INTERCEPPUMP_OPEN  , TBC.N_INTERCEPPUMP_PLATE ,TBE.WSRLJ,TBF.YSRLJ , TBB.N_GROUNDELEV_JSJ ,
+
+        TBB.N_BOTTOMELEV , TBB.N_DRAIPIPE_DIAMETER_IN
+
+		order by bzmc
+        </select>
+
+    <select id="findPointsById" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.WaterPointsRoadQueryVo">
+        SELECT TBA.S_NAME sName, TBB.T_STIME time, NVL(TBB.N_VALUE,0) value, TBC.S_NAME county, TBA.S_ADDR saddr,
+
+        TBA.N_DEEPTH ndeepth, TBA.S_MANAGE_UNITFX smanae
+
+        FROM T_JISHUI TBA
+
+        LEFT JOIN
+
+        (SELECT S_NO,T_STIME,N_VALUE FROM S_JISHUI_MONITOR) TBB
+
+        ON TBA.S_NO = TBB.S_NO
+
+        LEFT JOIN
+
+        T_DICTIONARYS_CONFIG TBC
+
+        ON TBC.S_MYTABLES = 'T_JISHUI' AND cast(TBA.N_DISTRICT as varchar(50)) = TBC.S_DIC_VALUE
+
+        WHERE TBA.S_NO = #{_parameter}
+    </select>
+
+    <select id="findUnderpassList" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.WaterPointsRoadQueryVo">
+        SELECT TBA.S_NAME sName, TBB.T_STIME time, NVL(TBB.N_VALUE,0) value, TBC.S_NAME county, TBA.S_ADDR saddr,
+
+        TBA.S_MANAGE_UNIT manageUnit, TBA.S_MAINTAIN_UNIT maintainUnit,
+
+        TBA.S_MANAGE_MANTEL managrMantel, TBA.S_MAINTAIN_UNITFX maintainUnitfx
+
+        FROM T_JISHUI TBA
+
+        LEFT JOIN
+
+        (SELECT S_NO,T_STIME,N_VALUE FROM S_JISHUI_MONITOR) TBB
+
+        ON TBA.S_NO = TBB.S_NO
+
+        LEFT JOIN
+
+        T_DICTIONARYS_CONFIG TBC
+
+        ON TBC.S_MYTABLES = 'T_JISHUI'
+
+        WHERE TBA.S_NO = #{_parameter} AND cast(TBA.N_DISTRICT as varchar(50)) = TBC.S_DIC_VALUE
+
+    </select>
+
+    <select id="findPointsDay" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.WaterPointsQueryVo">
+        select T_STIME TIME,N_VALUE VALUE
+
+        from S_JISHUI_MONITOR_HIS
+
+        where S_NO = #{param1} and T_STIME>=to_date(#{param2},'YY-MM-DD')+8/24
+
+        AND T_STIME &lt;trunc(to_date(#{param2},'YY-MM-DD'))+1+8/24 AND S_HASMONITOR='有' AND S_ISUSE=1
+
+        order by T_STIME
+
+    </select>
+
+    <select id="findOrdinary" resultType="com.wavenet.maintenance.web.vo.WaterPointsExtendQueryVo">
+        select S.S_NO SNO,T.S_NAME SNAME,T.S_MONTYPE SMONTYPE,S.N_VALUE VALUE from S_JISHUI_MONITOR S,T_JISHUI T
+
+        where S.N_VALUE > 0 AND S.T_STIME>DATEADD(hh,2,GETDATE()) AND S.T_STIME &lt; DATEADD(hh,+1,GETDATE()) AND S.S_NO = T.S_NO
+
+        AND s.S_STATENAME='正常'AND s.S_ISUSE='1' AND s.S_HASMONITOR='有'
+
+    </select>
+
+    <select id="findPumpList" resultType="com.wavenet.maintenance.web.vo.PumpWarningQueryVo">
+        SELECT TBB.S_DRAI_PUMP_NAME PUMPNAME,TBA.S_XTBM XTBM,
+
+		TBA.N_WATERLEVEL_1 SW,TBA.N_INTERCEPPUMP_OPEN WSOPEN,TBA.N_INTERCEPPUMP_SUM WSSUM
+	   ,TBA.N_RAINWATERPUMP_OPEN YSOPEN, TBA.N_RAINWATERPUMP_SUM YSSUM
+	   , NVL(tbc.S_GDSTATUS , '正常') gdsw,
+	   (case
+    when sysdate-1/24>TBA.D_TIME then 0
+    when TBC.S_XTBM IS NOT NULL then 2
+    else 1
+    end) AS STATE
+
+	   FROM S_DRAINPUMP_ACHIEVEMET TBA
+
+
+	   LEFT JOIN  T_DRAINPUMP_ADD TBB
+
+	   ON TBB.S_XTBM = TBA.S_XTBM
+
+	   LEFT JOIN S_DRAINPUMP_WARNACHIEVE TBC
+
+	   ON TBC.S_XTBM = TBA.S_XTBM
+        <if test="value!=null and value!=''">
+            where TBB.N_DRAI_PUMP_TYPE = #{value}
+        </if>
+
+
+    </select>
+
+    <select id="findPumpListNew" resultType="com.wavenet.maintenance.web.vo.PumpWarningNewQueryVo">
+        SELECT tba.T_STIME,tba.N_VALUE,tba.S_NO,tbb.S_NAME,
+	   (case
+    when sysdate-1/24>TBA.T_STIME then 0
+    when TBA.N_VALUE>0 then 2
+    else 1
+    end) AS STATE
+	   FROM S_JISHUI_MONITOR TBA
+
+	   LEFT JOIN  T_JISHUI TBB
+
+	   ON TBB.S_NO = TBA.S_NO
+
+       order by state,n_value desc
+    </select>
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventDisposalWorkloadMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        workload_code, disposal_code, event_type, event_type_large,
+        event_type_small, plan_value, unit, describe, process, auditor,
+        real_workLoad, thickness,real_thickness,event_type_code
+    </sql>
+    <delete id="deleteByDispoalCode">
+
+        DELETE  FROM EVENT_DISPOSAL_WORKLOAD WHERE disposal_code=#{dispatchCode}
+    </delete>
+
+    <select id="getEventDisposalWorkloadById" resultType="com.wavenet.maintenance.web.vo.EventDisposalWorkloadQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL_WORKLOAD where WORKLOAD_CODE = #{id}
+    </select>
+
+    <select id="getEventDisposalWorkloadPageList" resultType="com.wavenet.maintenance.web.vo.EventDisposalWorkloadQueryVo">
+        select
+        *
+        from EVENT_DISPOSAL_WORKLOAD where 1=1
+        <if test="eventDisposalWorkloadQueryParam.disposalCode != null and eventDisposalWorkloadQueryParam.disposalCode != ''">
+            and disposal_code = #{eventDisposalWorkloadQueryParam.disposalCode}
+        </if>
+    </select>
+    <select id="findById" resultType="com.wavenet.maintenance.web.vo.EventDisposalWorkloadQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL_WORKLOAD where DISPOSAL_CODE = #{id}
+    </select>
+
+    <select id="selectDisposalIsThick" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventDisposalWorkloadQueryVo">
+        SELECT tbf.*,tba.isthick from  EVENT_DISPOSAL_WORKLOAD tbf
+        left join EVENT_TYPE tba
+        on tbf.event_type_code = tba.event_type_code
+        where tbf.disposal_code= #{disposalCode}
+    </select>
+    <select id="getByDisposalCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.EventDisposalWorkload">
+        select <include refid="Base_Column_List"/>
+        from EVENT_DISPOSAL_WORKLOAD
+        where disposal_code= #{disposalCode}
+    </select>
+
+</mapper>

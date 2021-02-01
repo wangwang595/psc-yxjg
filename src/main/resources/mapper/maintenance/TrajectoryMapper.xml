@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.TrajectoryMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        OBJECTID, gps_code, patrol_code, person_code, uplaod_date, x, y, type, road_section_code, speed, mileage, SHAPE
+    </sql>
+
+    <select id="getTrajectoryById" resultType="com.wavenet.maintenance.web.vo.TrajectoryQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from TRAJECTORY where id = #{id}
+    </select>
+
+    <select id="getTrajectoryPageList" resultType="com.wavenet.maintenance.web.vo.TrajectoryQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from TRAJECTORY
+    </select>
+
+    <select id="getTrajectoryByPatrolCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.Trajectory">
+        select
+        gps_code gpsCode,patrol_code patrolCode,person_code personCode,x,y,type type,road_section_code roadSectionCode,speed,mileage,SHAPE shape,t.SHAPE.minx minx,t.SHAPE.maxx maxx,t.SHAPE.miny miny,t.SHAPE.maxy maxy
+        from
+        TRAJECTORY t
+        where
+        patrol_code = #{patrolCode} order by  uplaod_date desc
+    </select>
+    <select id="selectByPatrolCodeExist" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.TrajectoryQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from TRAJECTORY where patrol_code = #{patrolCode}
+    </select>
+
+</mapper>

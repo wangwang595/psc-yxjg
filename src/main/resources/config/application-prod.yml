@@ -1,0 +1,105 @@
+spring-boot-plus:
+  # 是否启用ansi控制台输出有颜色的字体，local环境建议开启，服务器环境设置为false
+  enable-ansi: true
+
+  # 拦截器配置
+  interceptor-config:
+    resource-config:
+      include-path: ${spring-boot-plus.resource-access-patterns}
+
+  # 文件上传下载配置
+  upload-path: /opt/upload/
+  # 资源访问路径
+  resource-access-path: /resource/
+  # 资源访问路径匹配：/resource/**
+  resource-access-patterns: ${spring-boot-plus.resource-access-path}**
+  # 资源访问全路径前缀：http://localhost:8888/resource/
+  resource-access-url: http://localhost:${server.port}${server.servlet.context-path}${spring-boot-plus.resource-access-path}
+
+server:
+  port: 9015
+  servlet:
+    context-path: /
+spring:
+  datasource:
+    dynamic:
+      primary: application
+      datasource:
+        application:
+#          #  本地
+#          username: root
+#          password: wavenet@31269900
+#          driver-class-name: com.mysql.jdbc.Driver
+#          url: jdbc:mysql://172.18.0.157:3306/PSC_GDYHJGPTTEST?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+#        permission3:
+#          username: root
+#          password: wavenet@31269900
+#          driver-class-name: com.mysql.jdbc.Driver
+#          url: jdbc:mysql://106.75.229.99:3307/organizations?characterEncoding=utf-8&useSSL=false
+          username: root
+          password: wavenet@31269900
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://192.168.180.228:3306/PSC_YHJGTEST?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+        permission3:
+          username: root
+          password: wavenet@31269900
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://192.168.180.228:3306/organizations?characterEncoding=utf-8&useSSL=false
+#        permission1:
+#          username: YP_GDYHJGPT
+#          password: GDYHJGPT_YP2020
+#          driver-class-name: oracle.jdbc.driver.OracleDriver
+#          url: jdbc:oracle:thin:@106.75.229.99:1522:xe
+#        permission2:
+#          username: YP_SCADA
+#          password: YPSCADA2020
+#          driver-class-name: oracle.jdbc.driver.OracleDriver
+#          url: jdbc:oracle:thin:@106.75.229.99:1522:xe
+  data:
+    mongodb:
+      database: pscgps
+      uri: mongodb://root:wavenet%4031269900@192.168.180.228:27017/pscgps
+
+  # Redis配置
+  #  本地
+#  redis:
+#    database: 9
+#    host: 10.23.172.175
+#    password:
+#    port: 6379
+  redis:
+    database: 1
+    host: 192.168.180.228
+    password:
+    port: 6379
+
+# logback.xml中有详细的日志配置
+logging:
+  config: classpath:config/logback.xml
+  #  方便Spring Boot Admin页面上实时查看日志
+  file:
+    path: logs/spring-boot-plus.log
+
+fdfs:
+  pool:
+    max-total: 153 # 从池中借出的对象的最大数目
+    max-wait-millis: 102 # 获取连接时的最大等待毫秒数100
+  thumbImage: # 缩略图生成参数，可选
+    width: 150
+    height: 150
+  #fastdfs服务器的ip地址，用来访问图片、文件等
+#  本地
+#  web-server-url: http://106.75.229.99:8888/
+  web-server-url: http:/192.168.180.228:8888/
+  connect-timeout: 6000
+  so-timeout: 5000
+  # fastdfs的traker的所有ip地址，tracker是调度服务器,作用是负载均衡和调度
+  tracker-list:
+#    - 172.18.0.86:22122
+#    - 10.23.228.58:22122
+    #  本地
+#    - 106.75.229.99:22122
+    - 192.168.180.228:22122
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

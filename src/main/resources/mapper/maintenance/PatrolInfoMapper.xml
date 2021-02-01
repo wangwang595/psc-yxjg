@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.PatrolInfoMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        PATROL_INFO.patrol_code, PATROL_INFO.road_code, PATROL_INFO.road_name, PATROL_INFO.road_section_code, PATROL_INFO.road_section_start,
+        PATROL_INFO.road_section_end, PATROL_INFO.date_start, PATROL_INFO.date_end,
+        PATROL_INFO.mileage, PATROL_INFO.type, PATROL_INFO.person_code, PATROL_INFO.person_name, PATROL_INFO.company, PATROL_INFO.town, PATROL_INFO.state,
+        PATROL_INFO.deleteState,PATROL_INFO.projectTeam,PATROL_INFO.speed, PATROL_INFO.trajectory_img
+    </sql>
+
+    <select id="getPatrolInfoById" resultType="com.wavenet.maintenance.web.vo.PatrolInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_INFO where PATROL_CODE = #{id}
+    </select>
+
+    <select id="getPatrolInfoPageList" resultType="com.wavenet.maintenance.web.vo.PatrolInfoQueryVo">
+        select
+        *
+        from PATROL_INFO
+    </select>
+
+    <select id="selectPatrolInfo" resultType="com.wavenet.maintenance.web.vo.PatrolInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_INFO
+        left join EVENT_INFO   on PATROL_INFO.PA
+    </select>
+
+    <update id="updateMileageByPatrolCode" parameterType="java.lang.String">
+        update PATROL_INFO set real_mileage = #{realMileage}
+        where patrol_code = #{patrolCode}
+    </update>
+
+    <select id="selectNewByPersonCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EveryReportErrorVo">
+        select top 1
+        patrol_code,state
+        from PATROL_INFO where person_code = #{personCode}
+        and DELETE_STATE = 1
+        order by date_start desc
+    </select>
+    <select id="getNumberQuestions" resultType="java.lang.Integer">
+
+
+        SELECT count(*) FROM  EVENT_INFO  WHERE patrol_code=#{patrolCode}
+
+    </select>
+    <select id="getInfoById" resultType="com.wavenet.maintenance.dao.entity.PatrolInfoS">
+        select
+        *
+        from PATROL_INFO where PATROL_CODE = #{id}
+    </select>
+    <select id="statisticCount" resultType="com.wavenet.maintenance.web.vo.PratolInfoVo">
+
+
+        SELECT tba.mileages,tba.project_team as town,tbb.frequency,tbc. questions FROM (SELECT project_team, ROUND(sum(mileage)/1000,2) as mileages FROM PATROL_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+
+        GROUP BY project_team
+        )tba
+        LEFT join (SELECT count(*) as frequency, project_team FROM PATROL_INFO  WHERE 1=1
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        GROUP BY project_team ) tbb
+
+        on tba.project_team =tbb.project_team
+
+        LEFT join (SELECT count(*) as questions, project_team FROM EVENT_INFO  WHERE 1=1
+        <if test="startDate != null">
+            and     report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        GROUP BY project_team) tbc
+
+        on tba.project_team =tbc.project_team
+
+
+    </select>
+    <select id="getCount" resultType="com.wavenet.maintenance.web.vo.PratolInfoCountVo">
+        SELECT   IFNULL(sum(tba.mileages),0)  mileages,IFNULL(sum(frequency),0)  frequency,  IFNULL(sum(questions),0) questions FROM ( SELECT tba.*,tbb.frequency,tbc. questions FROM (SELECT project_team,sum(mileage)/1000 as mileages FROM PATROL_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        GROUP BY project_team
+        )tba
+        LEFT join (SELECT count(*) as frequency, project_team FROM PATROL_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        GROUP BY project_team ) tbb
+
+        on tba.project_team =tbb.project_team
+
+        LEFT join (SELECT count(*) as questions, project_team FROM EVENT_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        GROUP BY project_team) tbc
+
+        on tba.project_team =tbc.project_team
+
+        ) tba
+
+
+    </select>
+    <select id="statisticCountDistrict" resultType="com.wavenet.maintenance.web.vo.PratolInfoVo">
+
+        SELECT tba.*,tbb.frequency,tbc. questions FROM (SELECT town, ROUND(sum(mileage)/1000,2) as mileages FROM PATROL_INFO
+        WHERE 1=1
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY town
+        )tba
+        LEFT join (SELECT count(*) as frequency, town FROM PATROL_INFO  WHERE 1=1
+
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY town ) tbb
+        on tba.town =tbb.town
+
+        LEFT join (SELECT count(*) as questions, town FROM EVENT_INFO  WHERE 1=1
+
+
+        <if test="startDate != null">
+            and     report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if> GROUP BY town) tbc
+        on tba.town =tbc.town
+
+
+    </select>
+    <select id="getCountDistrict" resultType="com.wavenet.maintenance.web.vo.PratolInfoCountVo">
+
+        SELECT   IFNULL(sum(tba.mileages),0)  mileages,IFNULL(sum(frequency),0)  frequency,  IFNULL(sum(questions),0) questions FROM ( SELECT tba.*,tbb.frequency,tbc. questions FROM (SELECT town,sum(mileage)/1000 as mileages FROM PATROL_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY town
+        )tba
+        LEFT join (SELECT count(*) as frequency, town FROM PATROL_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     date_start >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>date_start
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY town ) tbb
+
+        on tba.town =tbb.town
+
+        LEFT join (SELECT count(*) as questions, town FROM EVENT_INFO
+        WHERE 1=1
+
+        <if test="startDate != null">
+            and     report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+        GROUP BY town) tbc
+
+        on tba.town =tbc.town
+
+        ) tba
+
+    </select>
+</mapper>

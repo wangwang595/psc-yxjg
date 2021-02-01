@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.MaintenanceDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+       tba.detail_code, tba.plan_code, tba.road_code, tba.road_name, tba.road_section_code,
+	   tba.road_section_start, tba.road_section_end, tba.type, tba.year, tba.month, tba.curing_state,
+	   LEFT(tba.company,2) company, tba.pipe_total, tba.pipe_main, tba.pipe_branch,
+       tba.manhole, tba.catch_basin,tba.plans,tba.project_team,tba.town,tba.source,tba.Enclosure,tba.pipe_grade,tba.end_time,
+	   (case when tbb.curing_length is null then 0 else tbb.curing_length end) curing_length,
+	   (case  when cast (curing_length/pipe_total*100 as numeric(6,2)) is null then 0.00 else cast (curing_length/pipe_total*100 as numeric(6,2)) end) avgs,
+	   (case  when cast (real_length/pipe_total*100 as numeric(6,2)) is null then 0.00 else cast (real_length/pipe_total*100 as numeric(6,2)) end) relavg
+    </sql>
+
+    <sql id="Base_Column">
+       detail_code,plan_code,road_code,road_name,road_section_code,
+       road_section_start,road_section_end,type,year,month,curing_state,
+       LEFT(company,2) company,pipe_total,pipe_main,pipe_branch,manhole,catch_basin,
+       pipe_grade,delete_state,town,project_team,source,plans,Enclosure,
+       end_time
+    </sql>
+    <delete id="deleteByplanCode">
+
+        DELETE  FROM  MAINTENANCE_DETAIL WHERE plan_code=#{id}
+    </delete>
+
+    <select id="getMaintenanceDetailById" resultType="com.wavenet.maintenance.web.vo.MaintenanceDetailQueryVo">
+        select
+        <include refid="Base_Column"/>
+        from MAINTENANCE_DETAIL
+        where detail_code = #{id}
+    </select>
+
+    <select id="getMaintenanceDetailPageList"  resultType="com.wavenet.maintenance.web.vo.MaintenanceDetailQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from MAINTENANCE_DETAIL tba left join
+        (select detail_code,curing_length,real_length from  MAINTENANCE_DISPOSAL where delete_state='1') tbb
+        on  tba.detail_code=tbb.detail_code
+        where 1=1
+        <if test="param.roadName!=null and  param.roadName!=''">
+            and tba.road_name=#{param.roadName}
+        </if>
+        <if test="param.year!=null and param.year!=''">
+            and tba.year=#{param.year}
+        </if>
+        <if test="param.month!=null and param.month!=''">
+            and tba.month= #{param.month}
+        </if>
+        <if test="param.curingState!=null and param.curingState!=''">
+            and  tba.curing_state=#{param.curingState}
+        </if>
+        <if test="param.plans!=null and param.plans!=''">
+            and tba.plans = #{param.plans}
+        </if>
+        <if test="param.projectTeam!=null and param.projectTeam!=''">
+            and tba.project_team = #{param.projectTeam}
+        </if>
+        <if test="param.type!=null and param.type!=''">
+            and tba.type = #{param.type}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+            and tba.road_section_code = #{param.roadSectionCode}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and tba.town = #{param.town}
+        </if>
+
+        and delete_state=1
+    </select>
+
+    <select id="getMaintenanceDetail" parameterType="map" resultType="com.wavenet.maintenance.web.vo.MaintenanceDetailQueryVo">
+        select
+        <include refid="Base_Column"/>
+        from MAINTENANCE_DETAIL
+        where 1=1
+        <if test="param.detailCode!=null and  param.detailCode!=''">
+            and detail_code=#{param.detailCode}
+        </if>
+        <if test="param.roadName!=null and  param.roadName!=''">
+            and road_name=#{param.roadName}
+        </if>
+        <if test="param.plans!=null and  param.plans!=''">
+            and plans=#{param.plans}
+        </if>
+        <if test="param.roadName!=null and  param.roadName!=''">
+            and road_name=#{param.roadName}
+        </if>
+        <if test="param.year!=null and param.year!=''">
+            and year=#{param.year}
+        </if>
+        <if test="param.month!=null and param.month!=''">
+            and month= #{param.month}
+        </if>
+        <if test="param.curingState!=null and param.curingState!=''">
+            and  curing_state=#{param.curingState}
+        </if>
+        <if test="param.type!=null and param.type!=''">
+            and  type=#{param.type}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+            and  road_section_code=#{param.roadSectionCode}
+        </if>
+        <if test="param.town!=null and param.town!=''">
+            and town  in (${param.town})
+        </if>
+        <if test="objects != null and objects.size()>0">
+            and curing_state in
+            <foreach item="item" index="index" collection="objects"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and delete_state='1'
+    </select>
+    <select id="statisticCount" resultType="com.wavenet.maintenance.web.vo.UnblockStatisticsVo">
+        SELECT town,sum(pipe_total) as pipe_total ,sum(curing_length) curing_length,sum(real_length) real_length,sum(manhole) manhole,sum(curing_well_num) curing_well_num,sum(real_well_num)  real_well_num,sum(catch_basin) catch_basin
+        ,sum(curing_outlet_num) curing_outlet_num,sum(real_out_num) real_out_num
+        FROM (	SELECT MAINTENANCE_DETAIL.project_team as town,MAINTENANCE_DETAIL.pipe_total, MAINTENANCE_DETAIL.manhole,MAINTENANCE_DETAIL.catch_basin
+        ,MAINTENANCE_DISPOSAL.curing_length,real_length ,curing_well_num,curing_outlet_num ,real_out_num,real_well_num
+        FROM MAINTENANCE_DETAIL
+        LEFT JOIN MAINTENANCE_DISPOSAL
+        ON MAINTENANCE_DETAIL.detail_code =MAINTENANCE_DISPOSAL.detail_code
+        WHERE 1=1
+        <if test="year!=0 and year!=null ">
+            and year = #{year}
+        </if>
+        <if test="month!=0 and month!=null">
+            and  #{month} = month
+        </if>
+
+        ) tba GROUP BY tba.town
+
+    </select>
+    <select id="getcount" resultType="com.wavenet.maintenance.web.vo.UnblockStatisticsCountVo">
+        SELECT IFNULL(sum(tba.pipe_total),0) pipe_total,	IFNULL(sum(curing_length),0) curing_length,IFNULL(sum(real_length),0) real_length,	IFNULL(sum(manhole),0) manhole,		IFNULL(sum(curing_well_num),0) curing_well_num,IFNULL(sum(real_well_num),0) real_well_num,
+        IFNULL(sum(catch_basin),0) catch_basin,	IFNULL(sum(curing_outlet_num),0) curing_outlet_num,IFNULL(sum(real_out_num),0) real_out_num
+        FROM (SELECT MAINTENANCE_DETAIL.project_team as town ,MAINTENANCE_DETAIL.pipe_total, MAINTENANCE_DETAIL.manhole,MAINTENANCE_DETAIL.catch_basin
+        ,MAINTENANCE_DISPOSAL.curing_length,real_length ,curing_well_num,curing_outlet_num ,real_out_num,real_well_num
+        FROM MAINTENANCE_DETAIL
+        LEFT JOIN MAINTENANCE_DISPOSAL
+        ON MAINTENANCE_DETAIL.detail_code =MAINTENANCE_DISPOSAL.detail_code
+        WHERE 1=1
+        <if test="year!=0 and year!=null ">
+            and year = #{year}
+        </if>
+        <if test="month!=0 and month!=null">
+            and  #{month} = month
+        </if>
+
+        ) tba
+
+
+    </select>
+    <select id="statisticCountDistrict" resultType="com.wavenet.maintenance.web.vo.UnblockStatisticsVo">
+        SELECT town,sum(pipe_total) as pipe_total ,sum(curing_length) curing_length,sum(real_length) real_length,sum(manhole) manhole,sum(curing_well_num) curing_well_num,sum(real_well_num)  real_well_num,sum(catch_basin) catch_basin
+        ,sum(curing_outlet_num) curing_outlet_num,sum(real_out_num) real_out_num
+        FROM (SELECT MAINTENANCE_DETAIL.town ,MAINTENANCE_DETAIL.pipe_total, MAINTENANCE_DETAIL.manhole,MAINTENANCE_DETAIL.catch_basin
+        ,MAINTENANCE_DISPOSAL.curing_length,real_length ,curing_well_num,curing_outlet_num ,real_out_num,real_well_num
+        FROM MAINTENANCE_DETAIL
+        LEFT JOIN MAINTENANCE_DISPOSAL
+        ON MAINTENANCE_DETAIL.detail_code =MAINTENANCE_DISPOSAL.detail_code
+        WHERE 1=1
+        <if test="year!=0 and year!=null ">
+            and year = #{year}
+        </if>
+        <if test="month!=0 and month!=null">
+            and  #{month} = month
+        </if>
+        <if test="district != null and district != ''">
+            and MAINTENANCE_DETAIL.project_team=#{district}
+        </if>
+
+
+        ) tba GROUP BY tba.town
+
+
+    </select>
+    <select id="getcountDistrict" resultType="com.wavenet.maintenance.web.vo.UnblockStatisticsCountVo">
+        SELECT IFNULL(sum(tba.pipe_total),0) pipe_total,	IFNULL(sum(curing_length),0) curing_length,IFNULL(sum(real_length),0) real_length,	IFNULL(sum(manhole),0) manhole,		IFNULL(sum(curing_well_num),0) curing_well_num,IFNULL(sum(real_well_num),0) real_well_num,
+        IFNULL(sum(catch_basin),0) catch_basin,	IFNULL(sum(curing_outlet_num),0) curing_outlet_num,IFNULL(sum(real_out_num),0) real_out_num
+        FROM (SELECT MAINTENANCE_DETAIL.town ,MAINTENANCE_DETAIL.pipe_total, MAINTENANCE_DETAIL.manhole,MAINTENANCE_DETAIL.catch_basin
+        ,MAINTENANCE_DISPOSAL.curing_length,real_length ,curing_well_num,curing_outlet_num ,real_out_num,real_well_num
+        FROM MAINTENANCE_DETAIL
+        LEFT JOIN MAINTENANCE_DISPOSAL
+        ON MAINTENANCE_DETAIL.detail_code =MAINTENANCE_DISPOSAL.detail_code
+        WHERE 1=1
+        <if test="year!=0 and year!=null ">
+            and year = #{year}
+        </if>
+        <if test="month!=0 and month!=null">
+            and  #{month} = month
+        </if>
+        <if test="district != null and district != ''">
+            and MAINTENANCE_DETAIL.project_team=#{district}
+        </if>
+        ) tba
+
+
+    </select>
+
+
+</mapper>

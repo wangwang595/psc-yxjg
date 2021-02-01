@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventTypeMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        event_type_code, event_type_pcode, event_standard, name,
+        unit, note, sort,lv,state,isthick
+    </sql>
+
+    <select id="getEventTypeById" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE where event_type_code = #{id}
+    </select>
+    <select id="selectListByParentCode" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE where event_type_pcode = #{id}
+        order by sort
+    </select>
+
+    <select id="getEventTypePageList" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE
+    </select>
+    <!--根据名称查询-->
+    <select id="selectByName" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select * from EVENT_TYPE where name=#{name}
+    </select>
+    <!--根据code查询-->
+    <select id="selectByCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select * from EVENT_TYPE where event_type_code=#{code}
+    </select>
+    <!--查询lv为3的父节点和自己-->
+    <select id="selectParent" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select * from EVENT_TYPE where event_type_pcode=#{pcode}
+        UNION
+        select * from EVENT_TYPE where  event_type_code=#{pcode}
+    </select>
+    <select id="selectInfoByName" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select * from event_info where event_type=#{type}
+    </select>
+    
+    <select id="selectTreeByStandard" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.EventType">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE where event_standard = #{eventStandard}
+        or event_type_code = #{code}
+    </select>
+
+    <select id="selectAll"  resultType="com.wavenet.maintenance.dao.entity.EventType">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE
+    </select>
+
+    <select id="selectListByParentCodeNew" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_TYPE where event_type_pcode = #{id}
+        and event_standard = #{eventStandard}
+        order by sort
+    </select>
+    <!--开井作业查询大类小类-->
+    <select id="selectTypeByPcode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventTypeQueryVo">
+      select * from EVENT_TYPE where 1=1
+      <if test="pCode!=null">
+        and  event_type_pcode=#{pCode}
+      </if>
+      <if test="name!=null">
+        and name like #{name}+'%'
+      </if>
+
+
+    </select>
+    <select id="getSelectList" resultType="com.wavenet.maintenance.dao.entity.EventType">
+        SELECT event_type_code,note,event_standard,unit,name,event_type_pcode,state,sort,isthick,lv
+        FROM EVENT_TYPE  WHERE  event_standard =1;
+
+    </select>
+</mapper>

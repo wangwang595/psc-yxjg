@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EmergencyDisposalMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        Emergency_id, Emergency_disposal_code, start_time, end_time, att_before, att_ongoing, att_after, disposal_name, project_team, address, town,
+        source, remarks, enclosure, upload_name, upload_code, CONVERT(varchar(100), upload_time, 120) upload_time, emergency_state, disposal_state, company, disposal_remarks, emergency_type
+        ,x,y,event_x,event_y
+    </sql>
+
+<!--    <select id="getEmergencyDisposalById" resultType="com.wavenet.maintenance.web.vo.EmergencyDisposalQueryVo">-->
+<!--        select-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from Emergency_disposal where Emergency_id = #{id}-->
+<!--    </select>-->
+
+<!--    <select id="getEmergencyDisposalPageList" parameterType="com.wavenet.maintenance.web.query.EmergencyDisposalQueryParam" resultType="com.wavenet.maintenance.web.vo.EmergencyDisposalQueryVo">-->
+<!--        select tba.Emergency_id, tba.Emergency_disposal_code,-->
+<!--        tba.start_time, tba.end_time, tba.att_before,-->
+<!--        tba.att_ongoing, tba.att_after, tba.disposal_name,-->
+<!--        tba.project_team, tba.address, tba.town,-->
+<!--        tba.source, tba.remarks, tba.enclosure, tba.upload_name,-->
+<!--        tba.upload_code, CONVERT(varchar(100), tba.upload_time, 120) upload_time,-->
+<!--        tba.emergency_state, tba.disposal_state, tba.company, tba.disposal_remarks,-->
+<!--        tba.emergency_type,tbb.emergency_name,tba.x,tba.y,tba.event_x,tba.event_y-->
+<!--        from Emergency_disposal tba  left join Emergency tbb-->
+<!--        on tba.Emergency_disposal_code=tbb.emergency_code-->
+<!--        where 1=1-->
+<!--        <if test="param.projectTeam!=null and param.projectTeam!=''">-->
+<!--            and tba.project_team = #{param.projectTeam}-->
+<!--        </if>-->
+<!--        <if test="param.disposalName!=null and param.disposalName!=''">-->
+
+<!--            and tba.disposal_name = #{param.disposalName}-->
+<!--        </if>-->
+<!--        <if test="param.town!=null and param.town!=''">-->
+<!--            and tba.town = #{param.town}-->
+<!--        </if>-->
+<!--        <if test="param.emergencyDisposalCode!=null and param.emergencyDisposalCode!=''">-->
+<!--            and tba.Emergency_disposal_code = #{param.emergencyDisposalCode}-->
+<!--        </if>-->
+<!--        <if test="param.disposalState!=null and param.disposalState!=''">-->
+<!--            and tba.disposal_state = #{param.disposalState}-->
+<!--        </if>-->
+<!--        <if test="param.emergencyId!=null and param.emergencyId!=''">-->
+<!--            and tba.Emergency_id = #{param.emergencyId}-->
+<!--        </if>-->
+<!--        <if test="param.emergencyState!=null and param.emergencyState!=''">-->
+<!--            and tba.emergency_state = #{param.emergencyState}-->
+<!--        </if>-->
+<!--        <if test="param.emergencyType!=null and param.emergencyType!=''">-->
+<!--            and tba.emergency_type = #{param.emergencyType}-->
+<!--        </if>-->
+<!--        <if test="param.source!=null and param.source!=''">-->
+<!--            and tba.source = #{param.source}-->
+<!--        </if>-->
+<!--        <if test="param.company!=null and param.company!=''">-->
+<!--            and tba.company = #{param.company}-->
+<!--        </if>-->
+<!--        and tba.del_state='0'-->
+<!--        order by tba.start_time desc-->
+<!--    </select>-->
+<!--    -->
+<!--    <select id="getEmergencyDisposalByDisposalCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EmergencyDisposalQueryVo">-->
+<!--        select top 1-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from Emergency_disposal where Emergency_disposal_code = #{disposalCode} and emergency_state='执行中'-->
+<!--        and del_state='0'-->
+<!--        order by start_time desc-->
+<!--    </select>-->
+
+<!--    <update id="updateNull" parameterType="java.lang.String" >-->
+<!--        update Emergency_disposal set att_before = null , att_ongoing = null ,-->
+<!--        att_after = null, start_time = null , end_time = null,disposal_name = null,-->
+<!--        emergency_state='已派遣',-->
+<!--        del_state = #{del}-->
+<!--        where Emergency_id = #{id}-->
+<!--    </update>-->
+
+<!--    <select id="selectCount" resultType="com.wavenet.maintenance.web.vo.EmergencyInfoCountVo">-->
+<!--      select count(emergency_state) cnt from Emergency_disposal where Emergency_state='已派遣'-->
+<!--    </select>-->
+
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.PatrolGpsRealtimeMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        gps_code, patrol_code, person_code, uplaod_date, x, y, type, road_section_code, speed, mileage, state,
+        company,phone
+    </sql>
+
+    <select id="getPatrolGpsRealtimeById" resultType="com.wavenet.maintenance.web.vo.PatrolGpsRealtimeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_GPS_REALTIME where GPS_CODE = #{id}
+    </select>
+
+    <select id="getPatrolGpsRealtimePageList" resultType="com.wavenet.maintenance.web.vo.PatrolGpsRealtimeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_GPS_REALTIME
+    </select>
+    
+    <select id="selectAtWork" resultType="com.wavenet.maintenance.web.vo.PatrolGpsRealtimeQueryVo">
+        select tbc.* from Emergency tba left join Emergency_user_state tbb
+        on tba.emergency_code=tbb.emergency_code  left join PATROL_GPS_REALTIME tbc
+        on tbb.user_id=tbc.person_code
+        where tba.state=0 and
+        (tbb.user_state=0 or tbb.user_state=2)
+    </select>
+
+    <select id="selectStateIs0" resultType="com.wavenet.maintenance.web.vo.PatrolGpsRealtimeQueryVo">
+        select * from PATROL_GPS_REALTIME
+        where state = 0
+    </select>
+
+    <update id="updateUserState">
+        update PATROL_GPS_REALTIME set state = 1
+        where state= 0
+    </update>
+    
+    <select id="selectTypeByPersonCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.PatrolGpsRealtimeQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from PATROL_GPS_REALTIME where person_code = #{personCode}
+    </select>
+</mapper>

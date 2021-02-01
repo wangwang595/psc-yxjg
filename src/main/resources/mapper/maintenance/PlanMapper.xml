@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.PlanMapper">
+
+        <!--查询计划长度-->
+        <select id="selectPlanLength" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.PlanTableVo">
+            select sum(plantotal)plantotal,(case when sum(total) is null then 0 else sum(total) end) total, projectTeam,year,month from
+            (select sum(plantotal)planTotal ,sum(total)total,project_team projectTeam,plans,type,year,month from
+            (select tba.*,tbb.curing_length total from
+            (select detail_code,t.project_team ,t.plans,t.year,t.month ,t.type ,sum(t.pipe_total) plantotal from
+            MAINTENANCE_DETAIL t where  delete_state=1
+            group by t.project_team ,t.plans,t.year,t.month ,t.type ,t.detail_code) tba
+            left join (select t.detail_code,t.curing_state,curing_length from MAINTENANCE_DISPOSAL t
+            where curing_state='已审核' ) tbb on tba.detail_code=tbb.detail_code) tbc
+            group by project_team,plans,type,year,month) tbd where 1=1
+            <if test="year != null and year != ''" >
+                and year = #{year}
+            </if>
+            <if test="month != null and month != ''" >
+                and month = #{month}
+            </if>
+            <if test="team != null and team != ''" >
+                and projectTeam = #{team}
+            </if>
+            group by projectTeam,year,month
+        </select>
+    <!--根据项目组查询雨水污水河流的长度-->
+    <select id="selectByTeam" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.inPlans">
+        select planrain planRain,plansewage planSewage,planhl planHl,rain,sewage,hl,planTotal,total,case when planTotal=0 then 0 else Convert(decimal(18,2),total/planTotal*100) end complete from
+        (select planrain,plansewage,planhl,rain,sewage,hl,(planrain+plansewage+planhl) planTotal,
+        (case when (rain+sewage+hl) is null then 0 else (rain+sewage+hl) end ) total from
+        (select (case when tbe.planTotal is null then 0 else tbe.planTotal end ) planrain,
+        (case when tbd.planTotal is null then 0 else tbd.planTotal end ) plansewage,
+        (case when tbf.planTotal is NULL then 0 else tbf.planTotal end ) planhl,
+        (case when tbe.total is null then 0.01 else tbe.total end  ) rain,
+        (case when  tbd.total is null then 0.01 else tbd.total end  ) sewage,
+        (case when  tbf.total is null then 0.01 else tbf.total end ) hl from
+        --主表
+        (select project_team projectTeam from
+        (select tba.*,tbb.curing_length total from (select detail_code,t.project_team ,t.plans,t.year,t.month ,
+        t.type ,sum(t.pipe_total) plantotal from MAINTENANCE_DETAIL t
+        where plans= #{plan} and delete_state=1  and project_team= #{team}
+        group by t.project_team ,t.plans,t.year,t.month ,t.type ,t.detail_code) tba
+        left join (select t.detail_code,t.curing_state,curing_length
+        from MAINTENANCE_DISPOSAL t where curing_state='已审核' ) tbb
+        on tba.detail_code=tbb.detail_code) tbc where 1=1 and year = #{year}
+        group by project_team,plans,type) tbs
+        left join
+        --项目一组计划内，雨水查询，计划工作量和实际工作量
+        (select (case sum(planTotal) when null then 0 else sum(planTotal) end) planTotal ,sum(total) total,project_team  projectTeam,plans,type  type from
+        (select tba.*,tbb.curing_length total from
+        (select detail_code,t.project_team ,t.plans,t.year,t.month  ,t.type ,sum(t.pipe_total) plantotal  from  MAINTENANCE_DETAIL t
+        where plans= #{plan} and delete_state=1 and type='雨水' and project_team=#{team} group by t.project_team ,t.plans,t.year,t.month  ,t.type ,t.detail_code) tba
+        left join
+        (select t.detail_code,t.curing_state,curing_length from MAINTENANCE_DISPOSAL t where curing_state='已审核' ) tbb
+        on tba.detail_code=tbb.detail_code) tbc where 1=1
+        <if test="year != null and year != ''" >
+            and year = #{year}
+        </if>
+        <if test="month != null and month != ''" >
+            and month = #{month}
+        </if>
+        group by project_team,plans,type) tbe
+        on tbs.projectTeam=tbe.projectTeam
+        left join
+        --项目一组计划内，污水查询,计划工作量和实际工作量
+        (select  (case sum(planTotal) when null then 0 else sum(planTotal) end) planTotal ,sum(total) total,project_team  projectTeam,plans,type  type from
+        (select tba.*,tbb.curing_length total from
+        (select detail_code,t.project_team ,t.plans,t.year,t.month  ,t.type ,sum(t.pipe_total) plantotal  from  MAINTENANCE_DETAIL t
+        where plans= #{plan} and delete_state=1 and type='污水' and project_team=#{team}  group by t.project_team ,t.plans,t.year,t.month  ,t.type ,t.detail_code) tba
+        left join
+        (select t.detail_code,t.curing_state,curing_length from MAINTENANCE_DISPOSAL t where curing_state='已审核' ) tbb
+        on tba.detail_code=tbb.detail_code) tbc where 1=1
+        <if test="year != null and year != ''" >
+            and year = #{year}
+        </if>
+        <if test="month != null and month != ''" >
+            and month = #{month}
+        </if>
+        group by project_team,plans,type) tbd
+        on tbs.projectTeam=tbd.projectTeam
+        left join
+        --项目一组计划内，合流查询,计划工作量和实际工作量
+        (select  (case sum(planTotal) when null then 0 else sum(planTotal) end) planTotal ,sum(total) total,project_team  projectTeam,plans,type  type from
+        (select tba.*,tbb.curing_length total from
+        (select detail_code,t.project_team ,t.plans,t.year,t.month  ,t.type ,sum(t.pipe_total) plantotal  from  MAINTENANCE_DETAIL t
+        where plans= #{plan} and delete_state=1 and type='合流'  and project_team=#{team} group by t.project_team ,t.plans,t.year,t.month  ,t.type ,t.detail_code) tba
+        left join
+        (select t.detail_code,t.curing_state,curing_length from MAINTENANCE_DISPOSAL t where curing_state='已审核' ) tbb
+        on tba.detail_code=tbb.detail_code) tbc where 1=1
+        <if test="year != null and year != ''" >
+            and year = #{year}
+        </if>
+        <if test="month != null and month != ''" >
+            and month = #{month}
+        </if>
+        group by project_team,plans,type) tbf
+        on tbs.projectTeam=tbf.projectTeam) tbg) tbh
+    </select>
+    <!--路段下拉框查询-->
+    <select id="selectRoadName" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.MaintenanceDetail">
+        select distinct road_name from MAINTENANCE_DETAIL where 1=1
+        <if test="year != null and year != ''" >
+            and year = #{year}
+        </if>
+        <if test="month != null and month != ''" >
+            and month = #{month}
+        </if>
+        <if test="team != null and team != ''" >
+            and project_team = #{team}
+        </if>
+
+    </select>
+</mapper>

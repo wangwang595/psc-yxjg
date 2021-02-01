@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EmergencyUserStateMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        user_name, user_id, user_state , project_team , town , receive_state , company , emergency_code,start_time,end_time,status
+    </sql>
+
+    <sql id="Column_List">
+        tba.user_name, tba.user_id, tba.user_state , tba.project_team ,
+        tba.town, LEFT(tba.company,2)abbreviation,tba.company , tbb.x, tbb.y
+    </sql>
+
+    <select id="getEmergencyUserStateById" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from Emergency_user_state where user_id = #{id}
+    </select>
+
+<!--    <select id="getEmergencyUserStatePageList" parameterType="com.wavenet.maintenance.web.query.EmergencyUserStateQueryParam" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateGpsQueryVo">-->
+<!--        select-->
+<!--        <include refid="Column_List"/>-->
+<!--        from Emergency_user_state tba-->
+<!--        left join PATROL_GPS_REALTIME tbb-->
+<!--        on tba.user_id=tbb.person_code-->
+<!--        where 1=1-->
+<!--        <if test="param.projectTeam != null and param.projectTeam != ''">-->
+<!--            and tba.project_team = #{param.projectTeam}-->
+<!--        </if>-->
+<!--        <if test="param.town != null and param.town != ''">-->
+<!--            and tba.town = #{param.town} or tba.town is null-->
+<!--        </if>-->
+<!--        and tba.user_state ='0' or tba.user_state='2'-->
+<!--    </select>-->
+
+<!--    <select id="selectStateCount" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateCountVo">-->
+<!--        select count(1) con,user_state userState from [Emergency_user_state]-->
+<!--        group by user_state-->
+<!--    </select>-->
+
+<!--    <update id="updateAllState" >-->
+<!--        update Emergency_user_state set  receive_state = '未接收'-->
+<!--    </update>-->
+
+<!--    <update id="updateUserState1">-->
+<!--        update Emergency_user_state set user_state = 1-->
+<!--        where user_state = 0-->
+<!--    </update>-->
+<!--    <update id="updateUserState2">-->
+<!--        update Emergency_user_state set user_state = 1-->
+<!--        where user_state = 2-->
+
+<!--    </update>-->
+
+<!--    <select id="selectUserState" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateQueryVo">-->
+<!--        select-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from Emergency_user_state-->
+<!--        where user_state = 0-->
+<!--    </select>-->
+<!--    <select id="getlatestInstructions" resultType="com.wavenet.maintenance.dao.entity.Emergency">-->
+<!--        SELECT * FROM Emergency WHERE-->
+<!--        1=1-->
+<!--        <if test="startDate!=null ">-->
+<!--            and start_time > #{startDate}-->
+<!--        </if>-->
+<!--        <if test="endDate!=null ">-->
+<!--            and  #{endDate} > start_time-->
+<!--        </if>-->
+<!--        order  by start_time desc-->
+
+<!--    </select>-->
+<!--    <select id="getPerson" resultType="com.wavenet.maintenance.dao.entity.EmergencyUserState">-->
+
+<!--        SELECT * FROM Emergency_user_state WHERE-->
+<!--        user_state in (0,2)-->
+<!--        and emergency_code=#{emergencyCode}-->
+
+
+
+<!--    </select>-->
+<!--    <select id="getEvent" resultType="com.wavenet.maintenance.dao.entity.EmergencyDisposal">-->
+
+<!--        SELECT * FROM Emergency_disposal WHERE Emergency_state='已完成'-->
+<!--        and Emergency_disposal_code=#{emergencyCode}-->
+
+<!--    </select>-->
+<!--    <select id="getInfoByUserCode" resultType="com.wavenet.maintenance.web.vo.EmergencyUserStateStartQueryVo">-->
+<!--        SELECT qy.*,tba.times FROM Emergency_user_state qy ,(SELECT max(start_time) as times  FROM Emergency_StandBy WHERE user_code=#{userCode} )-->
+<!--        tba WHERE  user_id=#{userCode}-->
+
+
+<!--    </select>-->
+<!--    <select id="getlatestInstructionRe" resultType="com.wavenet.maintenance.dao.entity.Emergency">-->
+<!--        SELECT * FROM Emergency WHERE state=0-->
+<!--    </select>-->
+<!--    <select id="getSewerOnline" resultType="com.wavenet.maintenance.web.vo.PresonQueryVo">-->
+<!--        SELECT tbd.*,tbc.sewerOffline,tba.sewerOnlie, tbr.pavementOffline FROM-->
+<!--        (SELECT town, count(*) as pavementOnline FROM Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code-->
+<!--        WHERE eue.user_state =1  and  pge.type like '路面%' and eue.company !='应急队' and user_id !='e60b48d1f98c4797b69c72e2bbd264fa'-->
+<!--        and town is not null and  town !=''-->
+<!--        GROUP BY town) tbd-->
+
+<!--        left join-->
+<!--        (SELECT town, count(*) as sewerOffline FROM Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code-->
+<!--        WHERE eue.user_state in('0','2')  and  pge.type like '下水道%' and eue.company !='应急队' and user_id !='e60b48d1f98c4797b69c72e2bbd264fa'-->
+<!--        and town is not null and  town !=''-->
+<!--        GROUP BY town) tbc-->
+<!--        on-->
+<!--        tbd.town=tbc.town-->
+<!--        left JOIN-->
+<!--        (SELECT town, count(*) as sewerOnlie FROM Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code-->
+<!--        WHERE eue.user_state =1  and  pge.type like '下水道%' and eue.company !='应急队' and user_id !='e60b48d1f98c4797b69c72e2bbd264fa'-->
+<!--        and town is not null and  town !=''-->
+<!--        GROUP BY town) tba-->
+<!--        on-->
+<!--        tba.town=tbd.town-->
+<!--        left join-->
+<!--        (SELECT town, count(*) as pavementOffline FROM Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code-->
+<!--        WHERE eue.user_state in('0','2')  and  pge.type like '路面%' and eue.company !='应急队' and user_id !='e60b48d1f98c4797b69c72e2bbd264fa'-->
+<!--        and town is not null and  town !=''-->
+<!--        GROUP BY town) tbr-->
+<!--        on-->
+<!--        tbd.town=tbr.town-->
+<!--    </select>-->
+<!--    <select id="getEmergencyTeam" resultType="java.lang.Integer">-->
+
+<!--        SELECT count(*) FROM  Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code WHERE eue.user_state in('0','2')  and   eue.company ='应急队'-->
+<!--        UNION-->
+<!--        SELECT  count(*) FROM  Emergency_user_state eue left JOIN  PATROL_GPS_REALTIME pge on eue.user_id=pge.person_code WHERE eue.user_state =1  and   eue.company ='应急队'-->
+<!--    </select>-->
+<!--    <select id="getPersonOnline" resultType="com.wavenet.maintenance.dao.entity.EmergencyUserState">-->
+
+<!--        SELECT * FROM [dbo].[Emergency_user_state] WHERE user_state in ('0','2')-->
+
+<!--    </select>-->
+<!--    <select id="getUplaodDate" resultType="com.wavenet.maintenance.dao.entity.PatrolGpsRealtime">-->
+
+<!--        SELECT * FROM PATROL_GPS_REALTIME WHERE 1=1-->
+<!--        <if test="stringList != null and stringList.size()>0">-->
+<!--            and person_code in-->
+<!--            <foreach item="item" index="index" collection="stringList"-->
+<!--                     open="(" separator="," close=")">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
+
+<!--    </select>-->
+
+</mapper>

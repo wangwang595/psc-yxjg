@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.EventInfoMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        event_code, patrol_code, event_type_code, event_type,
+        event_type_large, event_type_small, event_desc, address,
+        x, y, person_code, person_name, company, town, report_date,
+        road_code, road_name, road_section_code, road_section_start,
+        road_section_end, attachment, event_state, delete_state,type,
+        project_team,source,event_standard,two_hours,time_zone_code
+    </sql>
+
+    <select id="getEventInfoById" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoPiager">
+        SELECT tbf.* FROM(
+        SELECT tbc.*,tbd.att_before,tbd.att_ongoing,tbd.att_after,tbd.disposal_code
+        FROM (select tba.*,tbb.dispatch_code
+        FROM EVENT_INFO tba
+        LEFT JOIN EVENT_DISPATCH_REL tbb
+        ON tba.event_code=tbb.event_code
+        LEFT JOIN EVENT_DISPATCH tbe
+        ON tbb.dispatch_code=tbe.dispatch_code
+        WHERE tba.delete_state='1') tbc
+        LEFT JOIN (SELECT *
+        FROM EVENT_DISPOSAL
+        WHERE isDel is null or isDel =1 ) tbd
+        ON tbc.dispatch_code=tbd.dispatch_code) tbf
+        WHERE 1=1 and EVENT_CODE = #{id}
+    </select>
+
+    <select id="getEventInfoPageList"  resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+    <if test="eventInfoQueryParam.time != null and eventInfoQueryParam.time != ''">
+        and  date_format(report_date,'%Y-%m')= #{eventInfoQueryParam.time}
+    </if>
+    <if test="eventInfoQueryParam.type != null and eventInfoQueryParam.type !=''">
+        and big_category in (${eventInfoQueryParam.type})
+    </if>
+    <if test="eventInfoQueryParam.eventType != null and eventInfoQueryParam.eventType !=''">
+        and tbf.event_type = #{eventInfoQueryParam.eventType}
+    </if>
+    <if test="eventInfoQueryParam.typeLarge != null and eventInfoQueryParam.typeLarge != ''">
+        and event_type_large = #{eventInfoQueryParam.typeLarge}
+    </if>
+    <if test="eventInfoQueryParam.typeSmall != null and eventInfoQueryParam.typeSmall !=''">
+        and event_type_small = #{eventInfoQueryParam.typeSmall}
+    </if>
+    <if test="eventInfoQueryParam.personCode != null and eventInfoQueryParam.personCode != ''">
+        and person_code = #{eventInfoQueryParam.personCode}
+    </if>
+    <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+        and tbf.project_team = #{eventInfoQueryParam.projectTeam}
+    </if>
+    <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+        and tbf.town = #{eventInfoQueryParam.town}
+    </if>
+    <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+        and event_state in  (${eventInfoQueryParam.eventState})
+    </if>
+    <if test="eventInfoQueryParam.personName !=null and eventInfoQueryParam.personName !=''">
+        and person_name = #{eventInfoQueryParam.personName}
+    </if>
+    <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+        and report_date >= #{eventInfoQueryParam.beginTime}
+    </if>
+    <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+        and report_date &lt;= #{eventInfoQueryParam.endTime}
+    </if>
+    <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+        and source in (${eventInfoQueryParam.source})
+    </if>
+    <if test="eventInfoQueryParam.eventStandard !=null and eventInfoQueryParam.eventStandard !=''">
+        and event_standard = #{eventInfoQueryParam.eventStandard}
+    </if>
+    <if test="eventInfoQueryParam.company !=null and eventInfoQueryParam.company !=''">
+        and tbf.company = #{eventInfoQueryParam.company}
+    </if>
+        <if test="eventInfoQueryParam.solverCode !=null and eventInfoQueryParam.solverCode !=''">
+            and tbf.solver_code = #{eventInfoQueryParam.solverCode}
+        </if>
+    </select>
+    <!--根据路段编号查询-->
+    <select id="selectInfoByCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select * from EVENT_INFO where event_code
+        in (select tbb.event_code from (select * from EVENT_DISPATCH tba where road_section_code=#{code} ) tba
+        left join EVENT_DISPATCH_REL tbb
+        on tba.dispatch_code=tbb.dispatch_code)
+    </select>
+    <!--根据路段名查询DispatchCode-->
+    <select id="selectDispatchCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.dao.entity.EventDispatchRel">
+        select tbb.* from (select * from EVENT_DISPATCH tba where road_code=#{code} ) tba
+        left join EVENT_DISPATCH_REL tbb
+        on tba.dispatch_code=tbb.dispatch_code
+    </select>
+    <!--查询eventInfo所有路段信息-->
+    <select id="selectRoadVoList" resultType="com.wavenet.maintenance.web.vo.RoadVo">
+        select distinct road_code roadCode,road_name roadName,road_section_code roadSectionCode, road_section_start roadSectionStart, road_section_end roadSectionEnd
+        from EVENT_INFO
+    </select>
+    <!--根据路段，起始时间查询eventInfo所有路段信息-->
+    <select id="selectEventListBySectionCodeAndTime"  resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_INFO where 1=1
+        <if test="param.roadCode!=null and param.roadCode!=''">
+            and road_code = #{param.roadCode}
+        </if>
+        <if test="param.roadSectionCode!=null and param.roadSectionCode!=''">
+           and road_section_code = #{param.roadSectionCode}
+        </if>
+        <if test="param.eventState!=null and param.eventState!=''">
+            and event_state = #{param.eventState}
+        </if>
+        <if test="param.startDate!=null and param.startDate!=''">
+          and  report_date  &gt; convert(varchar,#{param.startDate},121)
+        </if>
+        <if test="param.endDate!=null and param.endDate!=''">
+           and report_date  &lt; convert(varchar,#{param.endDate},121)
+        </if>
+        <if test="param.recipientCode != null and param.recipientCode !=''">
+            and recipient_code = #{param.recipientCode}
+        </if>
+        <choose>
+            <when test="param.desc == null or param.desc = '' or param.desc ">
+                order by report_date desc
+            </when>
+            <otherwise>
+                order  by report_date asc
+            </otherwise>
+        </choose>
+
+    </select>
+    <!--根据dispatchCode 联合查询 eventInfo-->
+    <select id="selectEventInfoListByDispatchCode"  resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+        select  *  from EVENT_INFO where event_code in
+        (select EVENT_DISPATCH_REL.event_code from EVENT_DISPATCH
+        left join EVENT_DISPATCH_REL on EVENT_DISPATCH.dispatch_code = EVENT_DISPATCH_REL.dispatch_code
+        where EVENT_DISPATCH.dispatch_code = #{dispatchCode})
+    </select>
+
+    <select id="findById" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+
+        SELECT TBA.* FROM EVENT_INFO TBA , EVENT_DISPATCH_REL TBB
+
+        WHERE TBA.event_code = TBB.event_code and tbb.dispatch_code = #{id}
+
+    </select>
+    
+    <select id="selectByPatrolCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select * from EVENT_INFO where patrol_code = #{patrolCode}
+    </select>
+
+    <update id="updateDelState" parameterType="java.lang.String">
+        update EVENT_INFO set delete_state = 0
+        where event_code = #{eventCode}
+    </update>
+    <update id="updatedada">
+
+        UPDATE Emergency_disposal set x=#{xd} ,y=#{yd} WHERE address=#{name}
+
+    </update>
+
+    <select id="selectTypeAll" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+        <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+            and project_team = #{eventInfoQueryParam.projectTeam}
+        </if>
+        <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+            and town = #{eventInfoQueryParam.town}
+        </if>
+        <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+            and event_state = #{eventInfoQueryParam.eventState}
+        </if>
+
+        <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+            and report_date >= #{eventInfoQueryParam.beginTime}
+        </if>
+        <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+            and report_date &lt;= #{eventInfoQueryParam.endTime}
+        </if>
+        <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+            and source = ${eventInfoQueryParam.source}
+        </if>
+        and delete_state='1' and  (type = '路面' or type = '桥梁' or type = '护栏')
+        and event_state != '未受理'
+    </select>
+
+    <!--根据personCode查询执行中的事件-->
+    <select id="selectByPersonCode" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from EVENT_INFO where person_code = #{personCode}
+        and (event_state='已完成' or event_state='已受理' or event_state='已审核')
+    </select>
+
+    <select id="selectEventInfoCount" resultType="com.wavenet.maintenance.web.vo.EventInfoCountVo">
+        select count(1) event_count from EVENT_INFO  where delete_state=1
+    </select>
+
+    <!--查询eventInfo表中未完成的记录-->
+    <select id="selectUnfinished" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from event_info where event_state!='已完成' and delete_state='1'
+        and event_standard = '1'
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        <if test="type!=null and type!=''">
+            and type = #{type}
+        </if>
+
+    </select>
+
+    <select id="groupStatistics" resultType="com.wavenet.maintenance.web.vo.EventInfoCountVo">
+        select count(1)event_count,type,project_team,company from EVENT_INFO where event_standard=0
+        group by type,project_team,company
+    </select>
+    
+    <select id="selectEventCount" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventCountQueryVo">
+        select tbb.source,(case when tba.num is null then 0 else tba.num end ) num from
+        (SELECT source,count(1)num FROM EVENT_INFO
+        where type = '路面' and event_state='已完成'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        group by source) tba
+        right join
+        (select '自派遣' source union select '网格单' union select '巡查发现') tbb
+        on tba.source = tbb.source
+    </select>
+
+    <select id="getInfoSource" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoSourceQueryVo">
+        select tba.town_name town,
+        (case when tbb.xcfx is null then 0 else tbb.xcfx end )xcfx,
+        (case when tbc.zpq is null then 0 else tbc.zpq end )zpq,
+        (case when tbd.wgd is null then 0 else tbd.wgd end ) wgd
+        from dict_town tba
+        left join
+        (select town,count(1) as xcfx  from  EVENT_INFO
+        where source='巡查发现'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        group by town) tbb
+        on tba.town_name= tbb.town
+        left join
+        (select town,count(1) as zpq from  EVENT_INFO where source='自派遣'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        group by town) tbc
+        on tba.town_name=tbc.town
+        left join
+        (select town,count(1) as wgd from  EVENT_INFO where source='网格单'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        group by town) tbd
+        on tba.town_name=tbd.town
+        order by tba.town_desc
+    </select>
+
+    <select id="getInfoSourceGroupByMonth" parameterType="java.lang.String" resultType="com.wavenet.maintenance.web.vo.EventInfoSourceByMonthQueryVo">
+        select tba.month,
+        (case when tbc.wgd is null then 0 else tbc.wgd end) wgd,
+        (case when tbe.xcfx is null then 0 else tbe.xcfx end) xcfx,
+        (case when tbg.zpq is null then 0 else tbg.zpq end) zpq from
+        (select 1 month union select 2 month union select 3 month union select 4 month union select 5 month union select 6 month union select 7 month
+        union select 8 month union select 9 month union select 10 month
+        union select 11 month union select 12 month) tba
+        left join
+        (select tbb.month,count(1)wgd from
+        (SELECT  DATEPART(mm,report_date) as month,source  from EVENT_INFO
+        where source='网格单'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        ) tbb
+        group by tbb.month,tbb.source) tbc
+        on tba.month = tbc.month
+        left join
+        (select tbd.month,count(1)xcfx from
+        (SELECT  DATEPART(mm,report_date) as month,source  from EVENT_INFO
+        where source='巡查发现'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        ) tbd
+        group by tbd.month,tbd.source) tbe
+        on tba.month = tbe.month
+        left join
+        (select tbf.month,count(1)zpq from
+        (SELECT  DATEPART(mm,report_date) as month,source  from EVENT_INFO
+        where source='自派遣'
+        <if test="beginTime!=null and beginTime!=''">
+            and CONVERT(varchar(100), report_date, 23) >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and CONVERT(varchar(100), report_date, 23) &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town = #{town}
+        </if>
+        ) tbf
+        group by tbf.month,tbf.source) tbg
+        on tba.month=tbg.month
+        order by tba.month
+    </select>
+    <select id="getMileage" resultType="com.wavenet.maintenance.web.vo.MileagesFreVOs">
+        SELECT sum(mileage) as mileages ,count(*) as frequency  FROM PATROL_INFO tba
+        WHERE 1=1
+        <if test="startDate!=null and startDate!=''">
+            and date_start > #{startDate}
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            and  #{endDate} > date_start
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="getFrequency" resultType="java.lang.Integer">
+
+        SELECT count(1) FROM PATROL_INFO WHERE project_team=#{projects} and date_start >#{date}
+
+    </select>
+    <select id="getQuestions" resultType="java.lang.Integer">
+
+        SELECT count(*) FROM PATROL_INFO po left JOIN EVENT_INFO eo on po.patrol_code=eo.patrol_code
+        where  1=1
+        and eo.delete_state='1'
+        <if test="startDate!=null and startDate!=''">
+            and po.date_start > #{startDate}
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            and  #{endDate} > po.date_start
+        </if>
+        <if test="project != null and project.size()>0">
+            and po.project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="listInformation" resultType="com.wavenet.maintenance.dao.entity.PatrolInfoS">
+
+        SELECT * FROM PATROL_INFO
+        WHERE
+        1=1
+        <if test="startDate!=null">
+            and date_start > #{startDate}
+        </if>
+        <if test="endDate!=null">
+            and  #{endDate} > date_start
+        </if>
+        <if test="twon!=null and twon!=''">
+            and town = #{twon}
+        </if>
+        <if test="type!=null and type!=''">
+            and  type = #{type}
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY date_start desc
+
+
+
+    </select>
+    <select id="listInformationQuer" resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+        SELECT eo.* FROM PATROL_INFO po left JOIN EVENT_INFO eo on po.patrol_code=eo.patrol_code
+
+        where 1=1
+        and eo.delete_state='1'
+        <if test="startDate!=null ">
+            and eo.report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > eo.report_date
+        </if>
+        <if test="twon!=null and twon!=''">
+            and eo.town = #{twon}
+        </if>
+        <if test="type!=null and type!=''">
+            and  eo.type = #{type}
+        </if>
+        <if test="project != null and project.size()>0">
+            and eo.project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="status!=null and status!=''">
+            and eo.event_state = #{status}
+        </if>
+        ORDER BY eo.report_date  desc
+
+
+    </select>
+    <select id="getTotal" resultType="java.lang.Integer">
+        SELECT count(*) FROM EVENT_INFO WHERE project_team=#{projects} and report_date >#{date} and delete_state='1'
+
+    </select>
+    <select id="getNow" resultType="java.lang.Integer">
+        SELECT count(*) FROM EVENT_INFO WHERE event_state='执行中'
+        WHERE project_team=#{projects} and
+        report_date >#{date}
+        and delete_state='1'
+    </select>
+    <select id="getClose" resultType="java.lang.Integer">
+
+        SELECT count(*) FROM EVENT_INFO WHERE event_state='已完成' WHERE
+        project_team=#{projects} and
+        report_date >#{date}
+        and delete_state='1'
+    </select>
+    <select id="cquiredQuantityQueryList" resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+        SELECT * FROM EVENT_INFO  eo
+        WHERE
+        1=1
+        and delete_state='1'
+        <if test="startDate!=null">
+            and eo.report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > eo.report_date
+        </if>
+        <if test="twon!=null and twon!=''">
+            and eo.town = #{twon}
+        </if>
+        <if test="project != null and project.size()>0">
+            and eo.project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="status!=null and status!=''">
+            and eo.event_state = #{status}
+        </if>
+        <if test="disease!=null and disease!=''">
+            and eo.type = #{disease}
+        </if>
+        <if test="source != null and source.size()>0">
+            and source in
+            <foreach item="item" index="index" collection="source"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY eo.report_date desc
+
+    </select>
+    <select id="getProblem" resultType="java.lang.Integer">
+        SELECT count(*)  FROM EVENT_INFO
+        WHERE 1=1
+        and delete_state='1'
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="getDispose" resultType="java.lang.Integer">
+        SELECT count(*)  FROM EVENT_INFO
+        WHERE 1=1
+       and event_state='执行中'
+        and delete_state='1'
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null">
+            and  #{endDate} > report_date
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="getCarry" resultType="java.lang.Integer">
+        SELECT count(*)  FROM EVENT_INFO
+        WHERE 1=1
+        and event_state='已完成'
+        and delete_state='1'
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="getWork" resultType="java.lang.Integer">
+        SELECT count(*)  FROM EVENT_INFO
+        WHERE 1=1
+        and  event_state='执行中'
+        and delete_state='1'
+        and source in ('网格单','自派遣')
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="getWorkTotal" resultType="java.lang.Integer">
+        SELECT count(*)  FROM EVENT_INFO
+        WHERE 1=1
+        and delete_state='1'
+        and source in ('网格单','自派遣')
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+        <if test="project != null and project.size()>0">
+            and project_team in
+            <foreach item="item" index="index" collection="project"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="eventReport" resultType="java.lang.Integer">
+        SELECT count(*) as report  FROM EVENT_INFO WHERE
+        1=1
+        <if test="sourceList != null and sourceList.size()>0">
+            and source in
+            <foreach item="item" index="index" collection="sourceList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="typeList != null and typeList.size()>0">
+            and type in
+            <foreach item="item" index="index" collection="typeList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime!=null and beginTime!=''">
+            and  report_date >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and  report_date &lt;= #{endTime}
+        </if>
+        <if test="town!=null and town!=''">
+            and town in (${town})
+        </if>
+        <if test="projectTeam!=null and projectTeam!=''">
+            and project_team in (${projectTeam})
+        </if>
+
+
+
+
+
+
+    </select>
+    <select id="eventCarry" resultType="java.lang.Integer">
+
+        SELECT count(*) as carry FROM EVENT_INFO WHERE
+        1=1
+        <if test="sourceList != null and sourceList.size()>0">
+            and source in
+            <foreach item="item" index="index" collection="sourceList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="typeList != null and typeList.size()>0">
+            and type in
+            <foreach item="item" index="index" collection="typeList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime!=null and beginTime!=''">
+            and  report_date >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and report_date &lt;= #{endTime}
+        </if>
+        <if test="eventState!=null and eventState!=''">
+            and event_state = #{eventState}
+        </if>
+        <if test="town!=null and town!=''">
+            and town in (${town})
+        </if>
+        <if test="projectTeam!=null and projectTeam!=''">
+            and project_team in (${projectTeam})
+        </if>
+
+    </select>
+    <select id="eventReview" resultType="java.lang.Integer">
+        SELECT count(*) as review FROM EVENT_INFO WHERE
+        1=1
+        <if test="sourceList != null and sourceList.size()>0">
+            and source in
+            <foreach item="item" index="index" collection="sourceList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="typeList != null and typeList.size()>0">
+            and type in
+            <foreach item="item" index="index" collection="typeList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="beginTime!=null and beginTime!=''">
+            and  report_date >= #{beginTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and  report_date &lt;= #{endTime}
+        </if>
+        <if test="eventState!=null and eventState!=''">
+            and event_state = #{eventState}
+        </if>
+        <if test="town!=null and town!=''">
+            and town in (${town})
+        </if>
+        <if test="projectTeam!=null and projectTeam!=''">
+            and project_team in (${projectTeam})
+        </if>
+
+
+    </select>
+    <select id="getListTest" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT top 1 FROM EVENT_DISPOSAL
+        WHERE
+        1=1
+        <if test="strings != null and strings.size()>0">
+            and dispatch_code =
+            <foreach item="item" index="index" collection="typeList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+    <select id="getPageListsdasd" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+
+
+    </select>
+    <select id="listHistoricalEmergency" resultType="com.wavenet.maintenance.web.vo.HistoricalEmergencyVo">
+        SELECT count(*) as number ,town FROM EVENT_INFO WHERE
+        1=1
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+        GROUP  BY town
+
+
+    </select>
+    <select id="getXy" resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+
+
+        SELECT * FROM EVENT_INFO where 1=1
+        <if test="startDate!=null ">
+            and report_date > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > report_date
+        </if>
+    </select>
+    <select id="listHistoricalRoad" resultType="com.wavenet.maintenance.web.vo.HistoricalEmergencyVo">
+
+        SELECT count(*) as number ,town FROM Emergency_disposal WHERE
+        1=1
+        <if test="startDate!=null ">
+            and start_time > #{startDate}
+        </if>
+        <if test="endDate!=null ">
+            and  #{endDate} > start_time
+        </if>
+        GROUP  BY town
+
+    </select>
+<!--    <select id="getXyRoad" resultType="com.wavenet.maintenance.dao.entity.EmergencyDisposal">-->
+
+<!--        SELECT * FROM Emergency_disposal where 1=1-->
+<!--        <if test="startDate!=null ">-->
+<!--            and start_time > #{startDate}-->
+<!--        </if>-->
+<!--        <if test="endDate!=null ">-->
+<!--            and  #{endDate} > start_time-->
+<!--        </if>-->
+
+<!--    </select>-->
+    <select id="testsdad" resultType="java.lang.String">
+
+        SELECT address FROM [dbo].[Emergency_disposal] GROUP BY address
+    </select>
+    <select id="getTotalReview" resultType="java.lang.Integer">
+        SELECT  sum(tba.con+tbc.conm) FROM ( SELECT count(*) con FROM EVENT_DISPOSAL,EVENT_INFO,EVENT_DISPATCH_REL WHERE  check_status in('0')
+        and EVENT_DISPOSAL.dispatch_code=EVENT_DISPATCH_REL.dispatch_code
+        and EVENT_DISPATCH_REL.event_code=EVENT_INFO.event_code
+        and EVENT_DISPOSAL.isDel=1
+        and EVENT_INFO.delete_state=1
+        and  EVENT_DISPOSAL.disposal_state in ('已完成','已审核'))tba ,
+        ( SELECT count(*) conm FROM  MAINTENANCE_DISPOSAL ,MAINTENANCE_DETAIL
+        WHERE
+        MAINTENANCE_DISPOSAL.detail_code =MAINTENANCE_DETAIL.detail_code
+        and MAINTENANCE_DISPOSAL.check_status in('0')
+        and  MAINTENANCE_DISPOSAL.curing_state in ('已完成','已审核'))tbc
+
+    </select>
+    <select id="getEventInfoPageLists" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+        <if test="eventInfoQueryParam.time != null and eventInfoQueryParam.time != ''">
+            and report_date like #{eventInfoQueryParam.time}+'%'
+        </if>
+        <if test="eventInfoQueryParam.type != null and eventInfoQueryParam.type !=''">
+            and type in (${eventInfoQueryParam.type})
+        </if>
+        <if test="eventInfoQueryParam.eventType != null and eventInfoQueryParam.eventType !=''">
+            and tbf.event_type = #{eventInfoQueryParam.eventType}
+        </if>
+        <if test="eventInfoQueryParam.typeLarge != null and eventInfoQueryParam.typeLarge != ''">
+            and event_type_large = #{eventInfoQueryParam.typeLarge}
+        </if>
+        <if test="eventInfoQueryParam.typeSmall != null and eventInfoQueryParam.typeSmall !=''">
+            and event_type_small = #{eventInfoQueryParam.typeSmall}
+        </if>
+        <if test="eventInfoQueryParam.personCode != null and eventInfoQueryParam.personCode != ''">
+            and person_code = #{eventInfoQueryParam.personCode}
+        </if>
+        <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+            and tbf.project_team = #{eventInfoQueryParam.projectTeam}
+        </if>
+        <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+            and
+           ( (source in('巡查发现')  and company=#{eventInfoQueryParam.company} and town=#{eventInfoQueryParam.town})
+            or (source in('市网格','区网格','自派遣')  and town=#{eventInfoQueryParam.town}))
+        </if>
+        <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+            and event_state in  (${eventInfoQueryParam.eventState})
+        </if>
+        <if test="eventInfoQueryParam.personName !=null and eventInfoQueryParam.personName !=''">
+            and person_name = #{eventInfoQueryParam.personName}
+        </if>
+        <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+            and report_date >= #{eventInfoQueryParam.beginTime}
+        </if>
+        <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+            and report_date &lt;= #{eventInfoQueryParam.endTime}
+        </if>
+        <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+            and source in (${eventInfoQueryParam.source})
+        </if>
+        <if test="eventInfoQueryParam.eventStandard !=null and eventInfoQueryParam.eventStandard !=''">
+            and event_standard = #{eventInfoQueryParam.eventStandard}
+        </if>
+        <if test="eventInfoQueryParam.solverCode !=null and eventInfoQueryParam.solverCode !=''">
+            and tbf.solver_code = #{eventInfoQueryParam.solverCode}
+        </if>
+
+    </select>
+    <select id="getEventInfoByCode" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1 and tbf.event_code=#{eventCode}
+
+    </select>
+    <select id="statisticCount" resultType="com.wavenet.maintenance.web.vo.QuestionsVo">
+        SELECT tba.questionTotal,tba.project_team as town,tbb.questionCarried,tbc.questionComplete FROM (SELECT project_team ,count(*) as questionTotal FROM EVENT_INFO
+        where 1=1
+
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        GROUP BY project_team )tba
+
+        LEFT join (SELECT count(*) as questionCarried, project_team FROM EVENT_INFO  WHERE event_state in('未受理','已派遣','执行中')
+
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        GROUP BY project_team ) tbb
+
+        on tba.project_team =tbb.project_team
+
+        LEFT join (SELECT count(*) as questionComplete , project_team FROM EVENT_INFO  WHERE event_state in('已完成','已审核')
+
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        GROUP BY project_team) tbc
+
+        on tba.project_team =tbc.project_team
+
+    </select>
+    <select id="getCount" resultType="com.wavenet.maintenance.web.vo.QuestionsCountVo">
+        SELECT  IFNULL(sum(tba.questionTotal),0)  questionTotal ,     IFNULL(sum(questionCarried),0) questionCarried, IFNULL( sum(questionComplete),0) questionComplete FROM (
+        SELECT tba.*,tbb.questionCarried,tbc.questionComplete FROM (
+        SELECT project_team ,count(*) as questionTotal FROM EVENT_INFO
+        where 1=1
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+        GROUP BY project_team )tba
+
+        LEFT join (SELECT count(*) as questionCarried, project_team FROM EVENT_INFO
+        WHERE event_state in('未受理','已派遣','执行中')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+
+        GROUP BY project_team ) tbb
+
+        on tba.project_team =tbb.project_team
+
+        LEFT join (SELECT count(*) as questionComplete , project_team FROM EVENT_INFO  WHERE event_state in('已完成','已审核')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+
+        GROUP BY project_team) tbc
+
+        on tba.project_team =tbc.project_team
+        ) tba
+
+
+
+    </select>
+    <select id="selectTypeAlls" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+        <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+            and project_team = #{eventInfoQueryParam.projectTeam}
+        </if>
+        <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+            and town = #{eventInfoQueryParam.town}
+        </if>
+        <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+            and event_state = #{eventInfoQueryParam.eventState}
+        </if>
+
+        <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+            and report_date >= #{eventInfoQueryParam.beginTime}
+        </if>
+        <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+            and report_date &lt;= #{eventInfoQueryParam.endTime}
+        </if>
+        <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+            and source = ${eventInfoQueryParam.source}
+        </if>
+        and delete_state='1' and  (type = '路面' or type = '桥梁' or type = '护栏')
+        and event_state != '未受理'
+        order by report_date
+
+    </select>
+    <select id="getEventInfoPageListss" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+        <if test="eventInfoQueryParam.time != null and eventInfoQueryParam.time != ''">
+            and report_date like #{eventInfoQueryParam.time}+'%'
+        </if>
+        <if test="eventInfoQueryParam.type != null and eventInfoQueryParam.type !=''">
+            and big_category in (${eventInfoQueryParam.type})
+        </if>
+        <if test="eventInfoQueryParam.eventType != null and eventInfoQueryParam.eventType !=''">
+            and tbf.event_type = #{eventInfoQueryParam.eventType}
+        </if>
+        <if test="eventInfoQueryParam.typeLarge != null and eventInfoQueryParam.typeLarge != ''">
+            and event_type_large = #{eventInfoQueryParam.typeLarge}
+        </if>
+        <if test="eventInfoQueryParam.typeSmall != null and eventInfoQueryParam.typeSmall !=''">
+            and event_type_small = #{eventInfoQueryParam.typeSmall}
+        </if>
+        <if test="eventInfoQueryParam.personCode != null and eventInfoQueryParam.personCode != ''">
+            and person_code = #{eventInfoQueryParam.personCode}
+        </if>
+        <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+            and tbf.project_team  in (${eventInfoQueryParam.projectTeam})
+        </if>
+        <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+            and tbf.town in (${eventInfoQueryParam.town})
+        </if>
+        <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+            and event_state in  (${eventInfoQueryParam.eventState})
+        </if>
+        <if test="eventInfoQueryParam.personName !=null and eventInfoQueryParam.personName !=''">
+            and person_name = #{eventInfoQueryParam.personName}
+        </if>
+        <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+            and report_date >= #{eventInfoQueryParam.beginTime}
+        </if>
+        <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+            and report_date &lt;= #{eventInfoQueryParam.endTime}
+        </if>
+        <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+            and source in (${eventInfoQueryParam.source})
+        </if>
+        <if test="eventInfoQueryParam.eventStandard !=null and eventInfoQueryParam.eventStandard !=''">
+            and event_standard = #{eventInfoQueryParam.eventStandard}
+        </if>
+        <if test="eventInfoQueryParam.company !=null and eventInfoQueryParam.company !=''">
+            and tbf.company = #{eventInfoQueryParam.company}
+        </if>
+        <if test="eventInfoQueryParam.solverCode !=null and eventInfoQueryParam.solverCode !=''">
+            and tbf.solver_code = #{eventInfoQueryParam.solverCode}
+        </if>
+        order by report_date desc
+    </select>
+    <select id="getEventInfoPageListsss" resultType="com.wavenet.maintenance.web.vo.EventInfoQueryVoStatus">
+
+        SELECT tbf.*  FROM( SELECT tbc.*,tbd.disposal_code,tbd.solver_code,tbd.solver_name,tbd.solve_start,
+        tbd.solve_end,tbd.solve_desc,tbd.att_before,tbd.att_ongoing,tbd.att_after, tbd.disposal_state,tbd.check_status
+        from
+        (select tba.*,tbb.dispatch_code,tbe.end_time from EVENT_INFO tba left join EVENT_DISPATCH_REL tbb
+        on tba.event_code=tbb.event_code
+        left join EVENT_DISPATCH tbe
+        on tbb.dispatch_code=tbe.dispatch_code
+        where tba.delete_state='1') tbc left join
+        (SELECT * FROM EVENT_DISPOSAL WHERE isDel  is  null or isDel =1 )  tbd on tbc.dispatch_code=tbd.dispatch_code) tbf
+        where 1=1
+        <if test="eventInfoQueryParam.time != null and eventInfoQueryParam.time != ''">
+            and report_date like #{eventInfoQueryParam.time}+'%'
+        </if>
+        <if test="eventInfoQueryParam.type != null and eventInfoQueryParam.type !=''">
+            and big_category in (${eventInfoQueryParam.type})
+        </if>
+        <if test="eventInfoQueryParam.eventType != null and eventInfoQueryParam.eventType !=''">
+            and tbf.event_type = #{eventInfoQueryParam.eventType}
+        </if>
+        <if test="eventInfoQueryParam.typeLarge != null and eventInfoQueryParam.typeLarge != ''">
+            and event_type_large = #{eventInfoQueryParam.typeLarge}
+        </if>
+        <if test="eventInfoQueryParam.typeSmall != null and eventInfoQueryParam.typeSmall !=''">
+            and event_type_small = #{eventInfoQueryParam.typeSmall}
+        </if>
+        <if test="eventInfoQueryParam.personCode != null and eventInfoQueryParam.personCode != ''">
+            and person_code = #{eventInfoQueryParam.personCode}
+        </if>
+        <if test="eventInfoQueryParam.projectTeam != null and eventInfoQueryParam.projectTeam != ''">
+            and tbf.project_team = #{eventInfoQueryParam.projectTeam}
+        </if>
+        <if test="eventInfoQueryParam.town != null and eventInfoQueryParam.town != ''">
+            and
+            ( (source in('巡查发现')  and company=#{eventInfoQueryParam.company} and town=#{eventInfoQueryParam.town})
+            or (source in('市网格','区网格','自派遣')  and town=#{eventInfoQueryParam.town}))
+        </if>
+        <if test="eventInfoQueryParam.eventState !=null and eventInfoQueryParam.eventState != ''">
+            and event_state in  (${eventInfoQueryParam.eventState})
+        </if>
+        <if test="eventInfoQueryParam.personName !=null and eventInfoQueryParam.personName !=''">
+            and person_name = #{eventInfoQueryParam.personName}
+        </if>
+        <if test="eventInfoQueryParam.beginTime != null and eventInfoQueryParam.beginTime != ''">
+            and report_date >= #{eventInfoQueryParam.beginTime}
+        </if>
+        <if test="eventInfoQueryParam.endTime != null and eventInfoQueryParam.endTime != ''">
+            and report_date &lt;= #{eventInfoQueryParam.endTime}
+        </if>
+        <if test="eventInfoQueryParam.source != null and eventInfoQueryParam.source != ''">
+            and source in (${eventInfoQueryParam.source})
+        </if>
+        <if test="eventInfoQueryParam.eventStandard !=null and eventInfoQueryParam.eventStandard !=''">
+            and event_standard = #{eventInfoQueryParam.eventStandard}
+        </if>
+        <if test="eventInfoQueryParam.solverCode !=null and eventInfoQueryParam.solverCode !=''">
+            and tbf.solver_code = #{eventInfoQueryParam.solverCode}
+        </if>
+        order by report_date
+
+    </select>
+    <select id="getTimeList" resultType="com.wavenet.maintenance.web.vo.TimeCodeVo">
+        SELECT Min(report_date) as minDate ,max(report_date) as  maxDate
+
+          FROM  EVENT_INFO GROUP BY  datediff(day,report_date,GETDATE())
+
+
+    </select>
+    <select id="getTimeLists" resultType="com.wavenet.maintenance.dao.entity.EventInfo">
+        SELECT *  FROM EVENT_INFO WHERE
+        report_date &lt;= #{maxDate}
+        and report_date >= #{minDate}
+        order by report_date
+
+    </select>
+    <select id="getTimeCode" resultType="java.lang.String">
+        SELECT time_zone_code FROM EVENT_INFO ,(SELECT max(report_date) as times FROM EVENT_INFO ) tba
+        WHERE
+        EVENT_INFO.report_date =tba.times
+        and report_date > CURDATE()
+    </select>
+    <select id="statisticCountDistrict" resultType="com.wavenet.maintenance.web.vo.QuestionsVo">
+        SELECT tba.*,tbb.questionCarried,tbc.questionComplete FROM (
+        SELECT town ,count(*) as questionTotal FROM EVENT_INFO
+        where 1=1
+        and project_team=#{district}
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+        GROUP BY town )tba
+
+        LEFT join (SELECT count(*) as questionCarried, town FROM EVENT_INFO
+        WHERE event_state in('未受理','已派遣','执行中')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        and project_team=#{district}
+
+        GROUP BY town ) tbb
+
+        on tba.town =tbb.town
+
+        LEFT join (SELECT count(*) as questionComplete , town FROM EVENT_INFO  WHERE event_state in('已完成','已审核')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        and project_team=#{district}
+
+        GROUP BY town) tbc
+
+        on tba.town =tbc.town
+
+    </select>
+    <select id="getCountdistrict" resultType="com.wavenet.maintenance.web.vo.QuestionsCountVo">
+        SELECT  IFNULL(sum(tba.questionTotal),0)  questionTotal ,     IFNULL(sum(questionCarried),0) questionCarried, IFNULL( sum(questionComplete),0) questionComplete FROM (
+        SELECT tba.*,tbb.questionCarried,tbc.questionComplete FROM (
+        SELECT town ,count(*) as questionTotal FROM EVENT_INFO
+        where 1=1
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+        GROUP BY town )tba
+
+        LEFT join (SELECT count(*) as questionCarried, town FROM EVENT_INFO
+        WHERE event_state in('未受理','已派遣','执行中')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+
+
+        GROUP BY town ) tbb
+
+        on tba.town =tbb.town
+
+        LEFT join (SELECT count(*) as questionComplete , town FROM EVENT_INFO  WHERE event_state in('已完成','已审核')
+        <if test="startDate != null">
+            and   report_date >#{startDate}
+        </if>
+        <if test="endDate != null">
+            and  #{endDate}>report_date
+        </if>
+
+
+        <if test="district != null and district != ''">
+            and project_team=#{district}
+        </if>
+
+        GROUP BY town) tbc
+
+        on tba.town =tbc.town
+        ) tba
+
+
+    </select>
+
+
+</mapper>

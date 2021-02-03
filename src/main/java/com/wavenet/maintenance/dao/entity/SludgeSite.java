@@ -3,7 +3,6 @@ package com.wavenet.maintenance.dao.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.wavenetframework.boot.common.entity.BaseEntity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -20,38 +19,31 @@ import javax.validation.constraints.NotNull;
  * </pre>
  *
  * @author zll
- * @since 2021-01-27
+ * @since 2021-02-02
  */
 @Data
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
-@TableName("LSSUE_ESCATION")
-@ApiModel(value = "LssueEscation对象", description = "")
-public class LssueEscation extends BaseEntity {
+@TableName("Sludge_Site")
+@ApiModel(value = "SludgeSite对象", description = "")
+public class SludgeSite extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "主键")
-    @TableId(value = "ID", type = IdType.UUID)
+    @TableId(value = "id", type = IdType.UUID)
     private String id;
+
+    @ApiModelProperty(value = "污泥站点")
+    private String sludgeSite;
+
+    @ApiModelProperty(value = "区域")
+    private String area;
 
     @ApiModelProperty(value = "x")
     private String x;
 
     @ApiModelProperty(value = "y")
     private String y;
-
-    @ApiModelProperty(value = "描述")
-        @TableField("sBz")
-private String sBz;
-
-
-    @ApiModelProperty(value = "问题类型")
-    @TableField("type")
-    private String type;
-
-    @ApiModelProperty(value = "附件")
-    @TableField("annex")
-    private String annex;
 
 }

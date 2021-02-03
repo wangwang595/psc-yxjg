@@ -112,4 +112,6 @@ public class MaintenanceDisposalCheckSpitVo {
     //备注
     private  String sBz;
 
+    @ApiModelProperty(value = "污泥站点")
+    private String sludgeSite;
 }

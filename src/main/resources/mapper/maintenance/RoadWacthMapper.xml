@@ -37,8 +37,11 @@
         <if test="param.personCode != null and  param.personCode!=''">
             and person_code = #{param.personCode}
         </if>
+        <if test="param.state != null and  param.state!=''">
+            and state='已完成'
+        </if>
         and delete_state=1
-        and state='已完成'
+
         order by tba.date_start desc , case tba.state when '未完成' then 1 when '执行中' then 2
         when '已完成' then 3  end asc
     </select>
@@ -108,7 +111,6 @@
         <if test="state != null and  state!=''">
             and state = #{state}
         </if>
-
         and delete_state = 1
     </select>
 

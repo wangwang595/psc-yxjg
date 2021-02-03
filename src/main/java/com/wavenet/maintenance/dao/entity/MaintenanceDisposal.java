@@ -132,4 +132,6 @@ private String webReview;
 @ApiModelProperty(value = "备注")
 private String sBz;
 
+    @ApiModelProperty(value = "污泥站点")
+    private String sludgeSite;
 }

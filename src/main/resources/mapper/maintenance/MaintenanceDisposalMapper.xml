@@ -22,7 +22,7 @@
     MAINTENANCE_DISPOSAL.check_status,
     MAINTENANCE_DISPOSAL.app_review,
     MAINTENANCE_DISPOSAL.web_review,
-    MAINTENANCE_DISPOSAL.s_bz
+    MAINTENANCE_DISPOSAL.s_bz, MAINTENANCE_DISPOSAL.sludge_site
 
 </sql>
     <sql id="Base_Column_List2">
@@ -41,7 +41,8 @@
         MAINTENANCE_DISPOSAL.check_status,
         MAINTENANCE_DISPOSAL.app_review,
         MAINTENANCE_DISPOSAL.web_review,
-        MAINTENANCE_DISPOSAL.s_bz
+        MAINTENANCE_DISPOSAL.s_bz,
+        MAINTENANCE_DISPOSAL.sludge_site
 
     </sql>
     <sql id="Base_Column_List1">
@@ -62,7 +63,8 @@
         MAINTENANCE_DISPOSAL.check_status,
         MAINTENANCE_DISPOSAL.app_review,
         MAINTENANCE_DISPOSAL.web_review,
-        MAINTENANCE_DISPOSAL.s_bz
+        MAINTENANCE_DISPOSAL.s_bz,
+        MAINTENANCE_DISPOSAL.sludge_site
     </sql>
 
     <select id="getMaintenanceDisposalById" resultType="com.wavenet.maintenance.web.vo.MaintenanceDisposalQueryVo">

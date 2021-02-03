@@ -46,7 +46,7 @@
             and yhwork = #{param.yhwork}
         </if>
         <if test="param.town!=null and param.town!=''">
-            and townid = #{param.town}
+            and townid in  (${param.town})
         </if>
         <if test="param.welltype!=null and param.welltype!=''">
             and welltype = #{param.welltype}

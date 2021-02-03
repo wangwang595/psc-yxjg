@@ -4,15 +4,11 @@ import com.wavenet.maintenance.common.FindArticleDto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.experimental.Accessors;
+
 
 @Data
-@Accessors(chain = true)
-
 @ApiModel(value = "TWelloperationQueryParam对象", description = "查询参数")
 public class TWelloperationQueryParamS  {
-    private static final long serialVersionUID = 1L;
-
     @ApiModelProperty(value = "开始时间")
     private String sDate;
     @ApiModelProperty(value = "结束时间")

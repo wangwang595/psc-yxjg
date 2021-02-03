@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wavenet.maintenance.dao.mapper.SludgeSiteMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, sludge_site, area, x, y
+    </sql>
+
+
+
+    <select id="getSludgeSitePageList" resultType="com.wavenet.maintenance.web.vo.SludgeSiteQueryVo">
+        select
+        <include refid="Base_Column_List"/>
+        from Sludge_Site
+        where 1=1
+
+        <if test="param.area!=null and param.area!=''">
+            and  area = #{param.area}
+        </if>
+    </select>
+
+</mapper>

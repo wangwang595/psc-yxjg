@@ -117,7 +117,7 @@ public class RoadWatchServiceImpl extends BaseServiceImpl<RoadWatchMapper,RoadWa
                     replace = projectTeam.replace(",", "','");
                     replace = "'" + replace + "'";
                 }
-                param.setTown(replace);
+                param.setProjectTeam(replace);
             }
         }
 
@@ -208,7 +208,7 @@ public class RoadWatchServiceImpl extends BaseServiceImpl<RoadWatchMapper,RoadWa
                     replace = projectTeam.replace(",", "','");
                     replace = "'" + replace + "'";
                 }
-                param.setTown(replace);
+                param.setProjectTeam(replace);
             }
         }
 

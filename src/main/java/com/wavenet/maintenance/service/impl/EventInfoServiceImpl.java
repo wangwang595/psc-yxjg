@@ -444,7 +444,7 @@ public class EventInfoServiceImpl extends BaseServiceImpl<EventInfoMapper, Event
                     replace = projectTeam.replace(",", "','");
                     replace = "'" + replace + "'";
                 }
-                eventInfoQueryParam.setTown(replace);
+                eventInfoQueryParam.setProjectTeam(replace);
             }
         }
         List<EventInfoQueryVoStatus>  list = eventInfoMapper.getEventInfoPageListss(eventInfoQueryParam);

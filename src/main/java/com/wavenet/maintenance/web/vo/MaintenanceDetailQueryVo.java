@@ -114,5 +114,8 @@ public class MaintenanceDetailQueryVo implements Serializable {
 
     @ApiModelProperty("道路")
     private String relavg;
+//
+//    @ApiModelProperty(value = "污泥站点")
+//    private String sludgeSite;
 
 }

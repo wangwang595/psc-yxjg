@@ -112,6 +112,17 @@ public class TWelloperationServiceImpl extends BaseServiceImpl<TWelloperationMap
             tWelloperationQueryParam.setState("异常");
         }
 
+        if (null != tWelloperationQueryParam.getTown()) {
+            if (!(tWelloperationQueryParam.getTown().equals(""))) {
+                String town = tWelloperationQueryParam.getTown();
+                String replace = "'" + town + "'";
+                if (town.contains(",")) {
+                    replace = town.replace(",", "','");
+                    replace = "'" + replace + "'";
+                }
+                tWelloperationQueryParam.setTown(replace);
+            }
+        }
         List<TWelloperationQueryVo> iPage = tWelloperationMapper.getTWelloperationPageList(tWelloperationQueryParam);
         //人员编号转换成人员中文名
         if (tWelloperationQueryParam.getManId()!=null&&tWelloperationQueryParam.getManId()!=""){

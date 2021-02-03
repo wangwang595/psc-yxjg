@@ -145,4 +145,8 @@ public class MaintenanceDisposalQueryVo implements Serializable {
     private String sBz;
 
 
+
+    @ApiModelProperty(value = "污泥站点")
+    private String sludgeSite;
+
 }

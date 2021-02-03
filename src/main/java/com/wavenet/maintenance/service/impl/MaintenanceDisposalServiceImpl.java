@@ -197,7 +197,7 @@ public class MaintenanceDisposalServiceImpl extends BaseServiceImpl<MaintenanceD
                     replace = projectTeam.replace(",", "','");
                     replace = "'" + replace + "'";
                 }
-                maintenanceDisposalQueryParam.setTown(replace);
+                maintenanceDisposalQueryParam.setProjectTeam(replace);
             }
         }
             iPage = maintenanceDisposalMapper.getMaintenanceDisposalPageLists(page, maintenanceDisposalQueryParam);
@@ -450,7 +450,7 @@ public class MaintenanceDisposalServiceImpl extends BaseServiceImpl<MaintenanceD
                     replace = projectTeam.replace(",", "','");
                     replace = "'" + replace + "'";
                 }
-                maintenanceDisposalQueryParam.setTown(replace);
+                maintenanceDisposalQueryParam.setProjectTeam(replace);
             }
         }
         MaintenanceDisposalCountVo count = maintenanceDisposalMapper.getLengthCount(maintenanceDisposalQueryParam,startDate,endDate);
